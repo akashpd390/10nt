@@ -53,7 +53,7 @@ export async function getTenantsHandler(_req: Request, res: Response): Promise<v
  */
 export async function getTenantByIdHandler(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
-  const tenant = await db.query.tenants.findOne?.({
+  const tenant = await db.query.tenants.findFirst({
     where: eq(tenants.id, id),
     with: {
       room: true,

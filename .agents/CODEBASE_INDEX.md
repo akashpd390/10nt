@@ -43,6 +43,12 @@ This file acts as the project index. It documents every file created, its purpos
 - `backend/src/modules/billing/ledger.test.ts`: TDD test suite validating bill calculations, signed balance mutations, and advance adjustments.
 - `backend/src/modules/payments/payments.controller.ts`: Manual payment entry handler with automatic ledger logging and mobile SMS notification template generation.
 - `backend/src/modules/payments/payments.routes.ts`: Routes for `/api/payments`.
+- `backend/src/modules/dashboard/dashboard.controller.ts`: Dashboard aggregation controller (room occupancy, total people count, pending vs advance finances, sorted unpaid tenants list, and last 5 transactions).
+- `backend/src/modules/dashboard/dashboard.routes.ts`: Routes for `/api/dashboard`.
+- `backend/src/modules/export/export.util.ts`: PDFKit and CSV generator for tenant rent roll, ledger history, and monthly invoices.
+- `backend/src/modules/export/export.test.ts`: TDD unit tests for CSV stringification and PDF buffer magic byte generation.
+- `backend/src/modules/export/export.controller.ts`: Endpoints for streaming PDF invoices and downloading CSV reports.
+- `backend/src/modules/export/export.routes.ts`: Routes for `/api/export`.
 - `backend/src/app.ts`: Express application initialization, CORS, route registration, and `/health` wakeup endpoint.
 - `backend/src/app.test.ts`: Sanity & health check test suite.
 

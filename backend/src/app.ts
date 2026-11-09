@@ -12,6 +12,8 @@ import { authRouter } from './modules/auth/auth.routes';
 import { roomsRouter } from './modules/rooms/rooms.routes';
 import { tenantsRouter } from './modules/tenants/tenants.routes';
 import { paymentsRouter } from './modules/payments/payments.routes';
+import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import { exportRouter } from './modules/export/export.routes';
 
 export const app = express();
 
@@ -34,6 +36,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/tenants', tenantsRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/export', exportRouter);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(env.PORT, () => {
