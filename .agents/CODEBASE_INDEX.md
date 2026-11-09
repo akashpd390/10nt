@@ -55,4 +55,21 @@ This file acts as the project index. It documents every file created, its purpos
 ---
 
 ## Android Mobile Client (`android/`)
-*(To be populated as files are created in Phase 4)*
+- `android/settings.gradle.kts`: Gradle settings including `:app` module.
+- `android/build.gradle.kts`: Root Gradle build file with Compose & Kotlin plugins.
+- `android/gradle/libs.versions.toml`: Version catalog with Koin 4.0, Compose 2025, Retrofit 2.11, OkHttp, and Security Crypto.
+- `android/app/build.gradle.kts`: App module build configuration with `buildConfigField("BASE_URL", ...)`.
+- `android/app/src/main/AndroidManifest.xml`: Manifest with Internet, Foreground Service (dataSync), and commented direct SEND_SMS permission.
+- `android/app/src/main/res/values/strings.xml`: User-facing strings (zero raw string rule).
+- `android/app/src/main/res/values/themes.xml`: XML base theme.
+- `android/app/src/main/java/com/tenants/app/presentation/theme/Color.kt`: Emerald & Parchment palette matching DESIGN.md.
+- `android/app/src/main/java/com/tenants/app/presentation/theme/Type.kt`: Roboto Flex typography scales.
+- `android/app/src/main/java/com/tenants/app/presentation/theme/Theme.kt`: Jetpack Compose Material 3 Theme wrapper.
+- `android/app/src/main/java/com/tenants/app/data/local/TokenManager.kt`: EncryptedSharedPreferences for AES-256 JWT persistence.
+- `android/app/src/main/java/com/tenants/app/data/remote/model/ApiModels.kt`: DTOs for Auth, Dashboard, Rooms, Tenants, and Payments.
+- `android/app/src/main/java/com/tenants/app/data/remote/TenantsApiService.kt`: Retrofit client definition.
+- `android/app/src/main/java/com/tenants/app/service/ServerWakeupForegroundService.kt`: Render sleep recovery foreground service with smart lifecycle notification suppression.
+- `android/app/src/main/java/com/tenants/app/utils/SmsSender.kt`: Dual-mode SMS abstraction (Interactive Intent default vs commented Direct SIM).
+- `android/app/src/main/java/com/tenants/app/di/AppModule.kt`: Koin DI module with cold-start network timeout interceptor.
+- `android/app/src/main/java/com/tenants/app/TenantsApplication.kt`: Application class initializing Koin.
+- `android/app/src/test/java/com/tenants/app/service/ServerWakeupServiceTest.kt`: Non-UI unit tests for lifecycle state detection and SMS formatting.

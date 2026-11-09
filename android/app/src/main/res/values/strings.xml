@@ -1,0 +1,72 @@
+<resources>
+    <string name="app_name">10nts</string>
+
+    <!-- Auth -->
+    <string name="login_title">Landlord Sign In</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Sign In</string>
+    <string name="change_password_title">Update Password</string>
+    <string name="old_password_hint">Current Password</string>
+    <string name="new_password_hint">New Password (min 8 chars)</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_rooms">Rooms</string>
+    <string name="nav_tenants">Tenants</string>
+    <string name="nav_payments">Payments</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Property Overview</string>
+    <string name="occupancy_label">Occupancy</string>
+    <string name="occupied_rooms_fmt">%1$d of %2$d Rooms</string>
+    <string name="total_people_fmt">%1$d Tenants (%2$d People)</string>
+    <string name="total_pending_label">Total Pending Dues</string>
+    <string name="total_advance_label">Total Advance Credit</string>
+    <string name="unpaid_tenants_title">Pending Dues This Month</string>
+    <string name="recent_payments_title">Recent Payments</string>
+    <string name="no_unpaid_tenants">All tenants are up to date! 🎉</string>
+
+    <!-- Rooms -->
+    <string name="add_room">Add Room</string>
+    <string name="room_no_hint">Room Number (e.g. 101)</string>
+    <string name="floor_hint">Floor</string>
+    <string name="base_price_hint">Base Price (₹)</string>
+    <string name="occupied_badge">Occupied</string>
+    <string name="vacant_badge">Available</string>
+
+    <!-- Tenants -->
+    <string name="add_tenant">Add Tenant</string>
+    <string name="tenant_name_hint">Full Name</string>
+    <string name="phone_hint">Mobile Number</string>
+    <string name="members_count_hint">Number of family members</string>
+    <string name="allotted_rent_hint">Agreed Monthly Rent (₹)</string>
+    <string name="electricity_rate_hint">Electricity Rate per Unit (₹)</string>
+    <string name="meter_reading_hint">Current Meter Reading</string>
+    <string name="opening_balance_hint">Advance (+) or Arrears (-)</string>
+
+    <!-- Payments -->
+    <string name="record_payment_title">Record Manual Payment</string>
+    <string name="select_tenant">Select Tenant</string>
+    <string name="amount_paid_hint">Amount Paid (₹)</string>
+    <string name="payment_mode_cash">Cash</string>
+    <string name="payment_mode_upi">UPI</string>
+    <string name="payment_mode_bank">Bank Transfer</string>
+    <string name="notes_hint">Notes (Optional)</string>
+    <string name="save_payment_button">Save &amp; Send Receipt</string>
+    <string name="sms_receipt_prompt">Send SMS Confirmation to Tenant?</string>
+    <string name="send_sms_button">Send SMS via SIM</string>
+    <string name="skip_button">Skip</string>
+
+    <!-- Cold start notification -->
+    <string name="server_connecting_title">Connecting to Server</string>
+    <string name="server_connecting_desc">Waking up Render instance, please wait…</string>
+    <string name="server_ready_title">10nts is Online!</string>
+    <string name="server_ready_desc">Server has awakened. Tap to continue managing properties.</string>
+
+    <!-- Dialogs -->
+    <string name="confirm_delete_title">Confirm Deletion</string>
+    <string name="confirm_delete_message">Are you sure you want to delete this record? This action cannot be undone.</string>
+    <string name="confirm_button">Confirm</string>
+    <string name="cancel_button">Cancel</string>
+</resources>

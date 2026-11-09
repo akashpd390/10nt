@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!--
+    ========================================================================================
+    DIRECT BACKGROUND SMS PERMISSION (COMMENTED OUT BY DEFAULT)
+    ----------------------------------------------------------------------------------------
+    As agreed, the default SMS method uses the interactive ACTION_SENDTO intent so this app
+    installs cleanly without dangerous permission prompts.
+    To enable direct silent 1-tap SIM SMS sending, simply uncomment the line below and toggle
+    the SmsSender implementation in your Koin module!
+    ========================================================================================
+    -->
+    <!-- <uses-permission android:name="android.permission.SEND_SMS" /> -->
+
+    <application
+        android:name=".TenantsApplication"
+        android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Tenants"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Tenants">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Foreground Service for Render Cold-Start Recovery Ping -->
+        <service
+            android:name=".service.ServerWakeupForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+    </application>
+
+</manifest>
