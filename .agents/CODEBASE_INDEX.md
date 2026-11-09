@@ -72,4 +72,15 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/utils/SmsSender.kt`: Dual-mode SMS abstraction (Interactive Intent default vs commented Direct SIM).
 - `android/app/src/main/java/com/tenants/app/di/AppModule.kt`: Koin DI module with cold-start network timeout interceptor.
 - `android/app/src/main/java/com/tenants/app/TenantsApplication.kt`: Application class initializing Koin.
+- `android/app/src/main/java/com/tenants/app/MainActivity.kt`: Main host activity with bottom navigation bar routing to Dashboard, Rooms, Tenants, and Payments.
+- `android/app/src/main/java/com/tenants/app/presentation/components/ConfirmationDialog.kt`: Reusable Material 3 confirmation dialog with preview.
+- `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardViewModel.kt`: Property metrics state management.
+- `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardScreen.kt`: Jetpack Compose UI for occupancy, finances, sorted unpaid list, recent transactions with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsViewModel.kt`: Rooms state management with occupancy validation.
+- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsScreen.kt`: Rooms listing, creation dialog, and deletion safeguard with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management and room allocation.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, opening balance setup, and arrears deletion protection with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentViewModel.kt`: Payment entry state, tenant search filtering, and receipt generation.
+- `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentScreen.kt`: Payment form, searchable tenant dropdown, quick stats, and post-payment SMS receipt prompt with `@Preview`.
+- `android/app/src/test/java/com/tenants/app/presentation/payments/PaymentViewModelTest.kt`: Unit tests for tenant selection auto-population and search filtering.
 - `android/app/src/test/java/com/tenants/app/service/ServerWakeupServiceTest.kt`: Non-UI unit tests for lifecycle state detection and SMS formatting.

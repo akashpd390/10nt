@@ -10,6 +10,7 @@ import com.tenants.app.utils.SmsSender
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -75,4 +76,10 @@ val appModule = module {
             .build()
             .create(TenantsApiService::class.java)
     }
+
+    // ViewModels
+    viewModel { com.tenants.app.presentation.dashboard.DashboardViewModel(get()) }
+    viewModel { com.tenants.app.presentation.rooms.RoomsViewModel(get()) }
+    viewModel { com.tenants.app.presentation.tenants.TenantsViewModel(get()) }
+    viewModel { com.tenants.app.presentation.payments.PaymentViewModel(get()) }
 }
