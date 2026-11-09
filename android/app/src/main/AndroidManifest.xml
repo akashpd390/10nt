@@ -7,14 +7,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!--
-    ========================================================================================
     DIRECT BACKGROUND SMS PERMISSION (COMMENTED OUT BY DEFAULT)
-    ----------------------------------------------------------------------------------------
     As agreed, the default SMS method uses the interactive ACTION_SENDTO intent so this app
     installs cleanly without dangerous permission prompts.
     To enable direct silent 1-tap SIM SMS sending, simply uncomment the line below and toggle
     the SmsSender implementation in your Koin module!
-    ========================================================================================
     -->
     <!-- <uses-permission android:name="android.permission.SEND_SMS" /> -->
 

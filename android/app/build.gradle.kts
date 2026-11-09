@@ -17,8 +17,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Secure Base URL configured via BuildConfig rather than raw string
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:5000/\"")
+        // Connects to local machine IP when running on physical device over Wi-Fi
+        buildConfigField("String", "BASE_URL", "\"http://10.31.54.171:5000/\"")
     }
 
     buildTypes {
