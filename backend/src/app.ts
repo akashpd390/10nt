@@ -2,12 +2,16 @@
  * @file app.ts
  * @module app
  * @description Express server entry point.
- * Provides health check, graceful shutdown, and route registration.
+ * Registers routes, middleware, and cold-start health checks.
  */
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { env } from './config/env';
+import { authRouter } from './modules/auth/auth.routes';
+import { roomsRouter } from './modules/rooms/rooms.routes';
+import { tenantsRouter } from './modules/tenants/tenants.routes';
+import { paymentsRouter } from './modules/payments/payments.routes';
 
 export const app = express();
 
@@ -16,7 +20,6 @@ app.use(express.json());
 
 /**
  * Health check endpoint for Render cold-start polling.
- * When Render spins down after 15 mins, client hits this to detect server wakeup.
  */
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
@@ -25,6 +28,12 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Feature Routes
+app.use('/api/auth', authRouter);
+app.use('/api/rooms', roomsRouter);
+app.use('/api/tenants', tenantsRouter);
+app.use('/api/payments', paymentsRouter);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(env.PORT, () => {

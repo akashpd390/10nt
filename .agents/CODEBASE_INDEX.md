@@ -30,7 +30,20 @@ This file acts as the project index. It documents every file created, its purpos
 - `backend/src/db/schema/index.ts`: PostgreSQL table definitions for users, rooms, tenants, bills, payments, and ledger entries with signed balance support.
 - `backend/src/db/index.ts`: Neon serverless database client connection.
 - `backend/src/db/migrations/0000_fearless_rachel_grey.sql`: Initial generated SQL migration for full schema.
-- `backend/src/app.ts`: Express application initialization, CORS, and `/health` wakeup endpoint.
+- `backend/src/middleware/auth.middleware.ts`: Bearer token validation middleware injecting authenticated user into Express request.
+- `backend/src/modules/auth/auth.service.ts`: Bcryptjs password hashing and JWT token generator/verifier.
+- `backend/src/modules/auth/auth.controller.ts`: Handlers for login, refresh token rotation, and password updates.
+- `backend/src/modules/auth/auth.routes.ts`: Routes for `/api/auth` endpoints.
+- `backend/src/modules/auth/auth.test.ts`: Unit test suite verifying hashing and token verification.
+- `backend/src/modules/rooms/rooms.controller.ts`: CRUD controller for rooms with occupancy validation and deletion safeguards.
+- `backend/src/modules/rooms/rooms.routes.ts`: Routes for `/api/rooms`.
+- `backend/src/modules/tenants/tenants.controller.ts`: Tenant registration, room occupancy binding, and deletion safeguard if unpaid dues exist.
+- `backend/src/modules/tenants/tenants.routes.ts`: Routes for `/api/tenants`.
+- `backend/src/modules/billing/ledger.util.ts`: Financial ledger calculations for electricity units, total bills, and signed running balances.
+- `backend/src/modules/billing/ledger.test.ts`: TDD test suite validating bill calculations, signed balance mutations, and advance adjustments.
+- `backend/src/modules/payments/payments.controller.ts`: Manual payment entry handler with automatic ledger logging and mobile SMS notification template generation.
+- `backend/src/modules/payments/payments.routes.ts`: Routes for `/api/payments`.
+- `backend/src/app.ts`: Express application initialization, CORS, route registration, and `/health` wakeup endpoint.
 - `backend/src/app.test.ts`: Sanity & health check test suite.
 
 ---
