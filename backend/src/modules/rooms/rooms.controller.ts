@@ -8,7 +8,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../../db';
 import { rooms, tenants } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const createRoomSchema = z.object({
   roomNo: z.string().min(1, 'Room number is required'),
@@ -23,8 +23,11 @@ const updateRoomSchema = createRoomSchema.partial();
 /**
  * Returns all rooms ordered by room number.
  */
-export async function getRoomsHandler(_req: Request, res: Response): Promise<void> {
-  const allRooms = await db.select().from(rooms).orderBy(rooms.roomNo);
+export async function getRoomsHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
+  const allRooms = landlordId
+    ? await db.select().from(rooms).where(eq(rooms.landlordId, landlordId)).orderBy(rooms.roomNo)
+    : await db.select().from(rooms).orderBy(rooms.roomNo);
   res.status(200).json({ rooms: allRooms });
 }
 
@@ -32,6 +35,7 @@ export async function getRoomsHandler(_req: Request, res: Response): Promise<voi
  * Creates a new room.
  */
 export async function createRoomHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
   const parsed = createRoomSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
@@ -40,8 +44,11 @@ export async function createRoomHandler(req: Request, res: Response): Promise<vo
 
   const { roomNo, description, floor, attachments, basePrice } = parsed.data;
 
-  // Check if room number already exists
-  const [existing] = await db.select().from(rooms).where(eq(rooms.roomNo, roomNo)).limit(1);
+  // Check if room number already exists for this landlord
+  const [existing] = landlordId
+    ? await db.select().from(rooms).where(and(eq(rooms.landlordId, landlordId), eq(rooms.roomNo, roomNo))).limit(1)
+    : await db.select().from(rooms).where(eq(rooms.roomNo, roomNo)).limit(1);
+
   if (existing) {
     res.status(409).json({ error: `Room ${roomNo} already exists` });
     return;
@@ -50,6 +57,7 @@ export async function createRoomHandler(req: Request, res: Response): Promise<vo
   const [newRoom] = await db
     .insert(rooms)
     .values({
+      landlordId,
       roomNo,
       description,
       floor,

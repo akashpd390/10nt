@@ -1,3 +1,12 @@
-<resources>
-    <style name="Theme.Tenants" parent="android:Theme.Material.Light.NoActionBar" />
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Tenants" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status Bar Configuration: Light Cream/Parchment background with Dark Icons -->
+        <item name="android:statusBarColor">#F3FCF4</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+
+        <!-- Emerald & Parchment Colors for Native Dialogs and Chrome -->
+        <item name="android:colorPrimary">#064E3B</item>
+        <item name="android:colorSecondary">#695D46</item>
+        <item name="android:colorBackground">#F3FCF4</item>
+    </style>
 </resources>

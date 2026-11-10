@@ -12,18 +12,23 @@
 import { Request, Response } from 'express';
 import { db } from '../../db';
 import { rooms, tenants, payments } from '../../db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, and } from 'drizzle-orm';
 
-export async function getDashboardOverviewHandler(_req: Request, res: Response): Promise<void> {
+export async function getDashboardOverviewHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
+
   // 1. Room Occupancy
-  const allRooms = await db.select().from(rooms);
+  const allRooms = landlordId
+    ? await db.select().from(rooms).where(eq(rooms.landlordId, landlordId))
+    : await db.select().from(rooms);
+
   const totalRooms = allRooms.length;
   const occupiedRooms = allRooms.filter((r) => r.isOccupied).length;
   const availableRooms = totalRooms - occupiedRooms;
 
   // 2. Tenants & Family Members
   const allTenants = await db.query.tenants.findMany({
-    where: eq(tenants.isActive, true),
+    where: landlordId ? and(eq(tenants.landlordId, landlordId), eq(tenants.isActive, true)) : eq(tenants.isActive, true),
     with: {
       room: true,
     },

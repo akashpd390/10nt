@@ -30,7 +30,8 @@ export const users = pgTable('users', {
  */
 export const rooms = pgTable('rooms', {
   id: uuid('id').defaultRandom().primaryKey(),
-  roomNo: varchar('room_no', { length: 50 }).notNull().unique(),
+  landlordId: uuid('landlord_id').references(() => users.id, { onDelete: 'cascade' }),
+  roomNo: varchar('room_no', { length: 50 }).notNull(),
   description: text('description'),
   floor: integer('floor').notNull().default(0),
   attachments: text('attachments').array(), // e.g. ["kitchen", "attached_bathroom", "balcony"]
@@ -45,6 +46,7 @@ export const rooms = pgTable('rooms', {
  */
 export const tenants = pgTable('tenants', {
   id: uuid('id').defaultRandom().primaryKey(),
+  landlordId: uuid('landlord_id').references(() => users.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 20 }).notNull(),
   familyMembersCount: integer('family_members_count').notNull().default(1),

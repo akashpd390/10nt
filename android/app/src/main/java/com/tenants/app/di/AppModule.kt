@@ -41,12 +41,17 @@ val appModule = module {
             try {
                 chain.proceed(requestBuilder.build())
             } catch (e: Exception) {
-                // If socket timeout occurs while internet is active, assume Render server cold-start
+                // If socket timeout occurs while internet is active, launch background wakeup ping
                 if (e is SocketTimeoutException || e is IOException) {
                     try {
-                        ServerWakeupForegroundService.start(context)
+                        val isForeground = androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.currentState
+                            .isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                        // Only start foreground service if user is outside app or backgrounded
+                        if (!isForeground) {
+                            ServerWakeupForegroundService.start(context)
+                        }
                     } catch (serviceException: Exception) {
-                        // Suppress background service start exceptions if OS restricts
+                        // Suppress background service start exceptions if OS restricts foreground launch
                     }
                 }
                 throw e

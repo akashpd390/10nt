@@ -37,8 +37,10 @@ const updateTenantSchema = z.object({
 /**
  * Lists all tenants with their room assignment details.
  */
-export async function getTenantsHandler(_req: Request, res: Response): Promise<void> {
+export async function getTenantsHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
   const result = await db.query.tenants.findMany({
+    where: landlordId ? eq(tenants.landlordId, landlordId) : undefined,
     with: {
       room: true,
     },
@@ -76,6 +78,7 @@ export async function getTenantByIdHandler(req: Request, res: Response): Promise
  * Creates a tenant and marks the assigned room as occupied.
  */
 export async function createTenantHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
   const parsed = createTenantSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
@@ -100,6 +103,7 @@ export async function createTenantHandler(req: Request, res: Response): Promise<
   const [newTenant] = await db
     .insert(tenants)
     .values({
+      landlordId,
       name: data.name,
       phone: data.phone,
       familyMembersCount: data.familyMembersCount,

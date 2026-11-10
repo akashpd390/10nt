@@ -67,139 +67,204 @@ fun DashboardContent(
         },
         containerColor = Surface
     ) { paddingValues ->
-        if (state.isLoading && state.data == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Primary)
-            }
-        } else {
-            val data = state.data
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (data != null) {
-                    // Occupancy & Tenants Summary Cards
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            MetricCard(
-                                title = stringResource(R.string.occupancy_label),
-                                value = "${data.occupancy.occupiedRooms}/${data.occupancy.totalRooms} Rooms",
-                                subtitle = "${data.occupancy.occupancyPercentage}% Occupied",
-                                icon = Icons.Default.MeetingRoom,
-                                modifier = Modifier.weight(1f)
-                            )
-                            MetricCard(
-                                title = "Tenants",
-                                value = "${data.tenantsSummary.totalActiveTenants} Active",
-                                subtitle = "${data.tenantsSummary.totalPeopleCount} Total People",
-                                icon = Icons.Default.People,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+        when {
+            state.isLoading && state.data == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Primary)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Loading property metrics...", style = MaterialTheme.typography.bodyMedium, color = Outline)
                     }
-
-                    // Financial Highlights
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
+                }
+            }
+            state.errorMessage != null && state.data == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = "Finances Overview",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Primary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column {
-                                        Text(stringResource(R.string.total_pending_label), style = MaterialTheme.typography.bodySmall, color = Outline)
-                                        Text(
-                                            text = "₹${"%.2f".format(data.finances.totalPendingBalance)}",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            color = Error,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(stringResource(R.string.total_advance_label), style = MaterialTheme.typography.bodySmall, color = Outline)
-                                        Text(
-                                            text = "₹${"%.2f".format(data.finances.totalAdvanceBalance)}",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            color = Primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
+                            Text("⚠️ Could Not Load Dashboard", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Error)
+                            Text(
+                                text = state.errorMessage ?: "Network or server connection failed.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Outline,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { onEvent(DashboardEvent.Refresh) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                                shape = RoundedCornerShape(9999.dp)
+                            ) {
+                                Text("Retry Connection", color = OnPrimary)
                             }
                         }
                     }
-
-                    // Unpaid Tenants Section Header
-                    item {
-                        Text(
-                            text = stringResource(R.string.unpaid_tenants_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Primary
-                        )
+                }
+            }
+            state.data == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("No Property Data Available", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Primary)
+                        Text("Add rooms and tenants to populate this dashboard.", style = MaterialTheme.typography.bodyMedium, color = Outline)
+                        Button(
+                            onClick = { onEvent(DashboardEvent.Refresh) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                            shape = RoundedCornerShape(9999.dp)
+                        ) {
+                            Text("Refresh", color = OnPrimary)
+                        }
                     }
+                }
+            }
+            else -> {
+                val data = state.data
+                if (data != null) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Occupancy & Tenants Summary Cards
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MetricCard(
+                                    title = stringResource(R.string.occupancy_label),
+                                    value = "${data.occupancy.occupiedRooms}/${data.occupancy.totalRooms} Rooms",
+                                    subtitle = "${data.occupancy.occupancyPercentage}% Occupied",
+                                    icon = Icons.Default.MeetingRoom,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                MetricCard(
+                                    title = "Tenants",
+                                    value = "${data.tenantsSummary.totalActiveTenants} Active",
+                                    subtitle = "${data.tenantsSummary.totalPeopleCount} Total People",
+                                    icon = Icons.Default.People,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
 
-                    if (data.unpaidTenants.isEmpty()) {
+                        // Financial Highlights
                         item {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow)
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(24.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
-                                        text = stringResource(R.string.no_unpaid_tenants),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Outline
+                                        text = "Finances Overview",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(stringResource(R.string.total_pending_label), style = MaterialTheme.typography.bodySmall, color = Outline)
+                                            Text(
+                                                text = "₹${"%.2f".format(data.finances.totalPendingBalance)}",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = Error,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(stringResource(R.string.total_advance_label), style = MaterialTheme.typography.bodySmall, color = Outline)
+                                            Text(
+                                                text = "₹${"%.2f".format(data.finances.totalAdvanceBalance)}",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = Primary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
-                    } else {
-                        items(data.unpaidTenants) { unpaid ->
-                            UnpaidTenantCard(unpaid = unpaid)
+
+                        // Unpaid Tenants Section Header
+                        item {
+                            Text(
+                                text = stringResource(R.string.unpaid_tenants_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Primary
+                            )
                         }
-                    }
 
-                    // Recent Payments
-                    item {
-                        Text(
-                            text = stringResource(R.string.recent_payments_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Primary
-                        )
-                    }
+                        if (data.unpaidTenants.isEmpty()) {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.no_unpaid_tenants),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Outline
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            items(data.unpaidTenants) { unpaid ->
+                                UnpaidTenantCard(unpaid = unpaid)
+                            }
+                        }
 
-                    items(data.recentTransactions) { tx ->
-                        RecentTxCard(tx = tx)
+                        // Recent Payments
+                        item {
+                            Text(
+                                text = stringResource(R.string.recent_payments_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Primary
+                            )
+                        }
+
+                        items(data.recentTransactions) { tx ->
+                            RecentTxCard(tx = tx)
+                        }
                     }
                 }
             }

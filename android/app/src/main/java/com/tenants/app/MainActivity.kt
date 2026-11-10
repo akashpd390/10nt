@@ -44,6 +44,15 @@ sealed class Screen(val route: String, val titleRes: Int, val icon: androidx.com
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Set status bar icons and background cleanly
+        window.statusBarColor = android.graphics.Color.parseColor("#F3FCF4")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility =
+                window.decorView.systemUiVisibility or android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        }
+
         setContent {
             TenantsTheme {
                 val authViewModel: AuthViewModel = koinViewModel()
