@@ -8,11 +8,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,12 +37,14 @@ import org.koin.androidx.compose.koinViewModel
  */
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = koinViewModel()
+    viewModel: DashboardViewModel = koinViewModel(),
+    onLogoutClick: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DashboardContent(
         state = state,
-        onEvent = viewModel::onEvent
+        onEvent = viewModel::onEvent,
+        onLogoutClick = onLogoutClick
     )
 }
 
@@ -48,8 +55,11 @@ fun DashboardScreen(
 @Composable
 fun DashboardContent(
     state: DashboardUiState,
-    onEvent: (DashboardEvent) -> Unit
+    onEvent: (DashboardEvent) -> Unit,
+    onLogoutClick: () -> Unit = {}
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -61,6 +71,22 @@ fun DashboardContent(
                 actions = {
                     IconButton(onClick = { onEvent(DashboardEvent.Refresh) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Primary)
+                    }
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More Options", tint = Primary)
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Sign Out", color = Error, fontWeight = FontWeight.SemiBold) },
+                            leadingIcon = { Icon(Icons.Default.Logout, contentDescription = null, tint = Error) },
+                            onClick = {
+                                showMenu = false
+                                onLogoutClick()
+                            }
+                        )
                     }
                 }
             )
@@ -354,37 +380,48 @@ fun RecentTxCard(tx: RecentTxDto) {
 @Preview(name = "Dashboard Content Preview", showBackground = true)
 @Composable
 private fun DashboardContentPreview() {
-    TenantsTheme {
-        DashboardContent(
-            state = DashboardUiState(
-                isLoading = false,
-                data = DashboardResponse(
-                    occupancy = OccupancyDto(totalRooms = 10, occupiedRooms = 8, availableRooms = 2, occupancyPercentage = 80.0),
-                    tenantsSummary = TenantsSummaryDto(totalActiveTenants = 8, totalPeopleCount = 18),
-                    finances = FinancesDto(totalPendingBalance = 12500.0, totalAdvanceBalance = 4000.0),
-                    unpaidTenants = listOf(
-                        UnpaidTenantDto(
-                            tenantId = "1",
-                            tenantName = "Rahul Sharma",
-                            roomNo = "101",
-                            phone = "9876543210",
-                            dueAmount = 6500.0,
-                            profilePicUrl = null
-                        ),
-                        UnpaidTenantDto(
-                            tenantId = "2",
-                            tenantName = "Amit Verma",
-                            roomNo = "104",
-                            phone = "9876543211",
-                            dueAmount = 3200.0,
-                            profilePicUrl = null
-                        )
-                    ),
-                    recentTransactions = listOf(
-                        RecentTxDto(id = "1", tenantName = "Rahul Sharma", amount = 5000.0, mode = "UPI", date = "2026-11-09", balanceAfter = -1500.0)
-                    )
+
+    val state = DashboardUiState(
+        isLoading = false,
+        data = DashboardResponse(
+            occupancy = OccupancyDto(totalRooms = 10, occupiedRooms = 8, availableRooms = 2, occupancyPercentage = 80.0),
+            tenantsSummary = TenantsSummaryDto(totalActiveTenants = 8, totalPeopleCount = 18),
+            finances = FinancesDto(totalPendingBalance = 12500.0, totalAdvanceBalance = 4000.0),
+            unpaidTenants = listOf(
+                UnpaidTenantDto(
+                    tenantId = "1",
+                    tenantName = "Rahul Sharma",
+                    roomNo = "101",
+                    phone = "9876543210",
+                    dueAmount = 6500.0,
+                    profilePicUrl = null
+                ),
+                UnpaidTenantDto(
+                    tenantId = "2",
+                    tenantName = "Amit Verma",
+                    roomNo = "104",
+                    phone = "9876543211",
+                    dueAmount = 3200.0,
+                    profilePicUrl = null
                 )
             ),
+            recentTransactions = listOf(
+                RecentTxDto(id = "1", tenantName = "Rahul Sharma", amount = 5000.0, mode = "UPI", date = "2026-11-09", balanceAfter = -1500.0)
+            )
+        )
+    )
+
+    val isLoadingState = DashboardUiState(
+        isLoading = false
+    )
+
+    val errorState = DashboardUiState(errorMessage = "Something went Wrong")
+
+
+
+    TenantsTheme {
+        DashboardContent(
+            state = isLoadingState,
             onEvent = {}
         )
     }

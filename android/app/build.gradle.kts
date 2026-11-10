@@ -18,7 +18,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Connects to local machine IP when running on physical device over Wi-Fi
-        buildConfigField("String", "BASE_URL", "\"http://10.31.54.171:5000/\"")
+        buildConfigField("String", "BASE_URL", "\"https://one0nt.onrender.com/\"")
     }
 
     buildTypes {

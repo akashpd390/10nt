@@ -64,6 +64,18 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
                 val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route && currentRoute?.startsWith("tenant_details") != true
 
+                // Listen for Forced Logout event (e.g. 7-day token expired)
+                val context = androidx.compose.ui.platform.LocalContext.current
+                LaunchedEffect(Unit) {
+                    com.tenants.app.data.local.SessionEvents.forceLogoutEvent.collect { reason ->
+                        android.widget.Toast.makeText(context, reason, android.widget.Toast.LENGTH_LONG).show()
+                        authViewModel.onEvent(com.tenants.app.presentation.auth.AuthEvent.Logout)
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+
                 Scaffold(
                     bottomBar = {
                         if (showBottomBar) {
@@ -93,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = startRoute,
-                        modifier = Modifier.padding(paddingValues)
+                        modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
                     ) {
                         composable(Screen.Login.route) {
                             LoginScreen(
@@ -105,7 +117,16 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable(Screen.Dashboard.route) { DashboardScreen() }
+                        composable(Screen.Dashboard.route) {
+                            DashboardScreen(
+                                onLogoutClick = {
+                                    authViewModel.onEvent(com.tenants.app.presentation.auth.AuthEvent.Logout)
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                         composable(Screen.Rooms.route) { RoomsScreen() }
                         composable(Screen.Tenants.route) {
                             TenantsScreen(

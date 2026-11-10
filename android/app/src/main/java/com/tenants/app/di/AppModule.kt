@@ -62,9 +62,12 @@ val appModule = module {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
         }
 
+        val authenticator = com.tenants.app.data.remote.TokenAuthenticator(tokenManager)
+
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
+            .authenticator(authenticator)
             .connectTimeout(60, TimeUnit.SECONDS) // Generous 60s for Render initial handshake
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
