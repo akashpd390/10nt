@@ -14,6 +14,7 @@ data class RoomsUiState(
     val isLoading: Boolean = false,
     val rooms: List<RoomDto> = emptyList(),
     val showAddDialog: Boolean = false,
+    val roomToEdit: RoomDto? = null,
     val roomToDelete: RoomDto? = null,
     val errorMessage: String? = null
 )
@@ -23,6 +24,9 @@ sealed interface RoomsEvent {
     data object ShowAddDialog : RoomsEvent
     data object DismissAddDialog : RoomsEvent
     data class CreateRoom(val roomNo: String, val floor: Int, val basePrice: Double) : RoomsEvent
+    data class RequestEditRoom(val room: RoomDto) : RoomsEvent
+    data class UpdateRoom(val id: String, val floor: Int, val basePrice: Double) : RoomsEvent
+    data object DismissEditDialog : RoomsEvent
     data class RequestDeleteRoom(val room: RoomDto) : RoomsEvent
     data object ConfirmDeleteRoom : RoomsEvent
     data object DismissDeleteDialog : RoomsEvent
@@ -46,6 +50,9 @@ class RoomsViewModel(
             is RoomsEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             is RoomsEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is RoomsEvent.CreateRoom -> createRoom(event.roomNo, event.floor, event.basePrice)
+            is RoomsEvent.RequestEditRoom -> _uiState.update { it.copy(roomToEdit = event.room) }
+            is RoomsEvent.UpdateRoom -> updateRoom(event.id, event.floor, event.basePrice)
+            is RoomsEvent.DismissEditDialog -> _uiState.update { it.copy(roomToEdit = null) }
             is RoomsEvent.RequestDeleteRoom -> _uiState.update { it.copy(roomToDelete = event.room) }
             is RoomsEvent.ConfirmDeleteRoom -> deleteRoom()
             is RoomsEvent.DismissDeleteDialog -> _uiState.update { it.copy(roomToDelete = null) }
@@ -86,6 +93,26 @@ class RoomsViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Creation failed") }
+            }
+        }
+    }
+
+    private fun updateRoom(id: String, floor: Int, basePrice: Double) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, roomToEdit = null) }
+            try {
+                val payload = mapOf(
+                    "floor" to floor,
+                    "basePrice" to basePrice
+                )
+                val response = apiService.updateRoom(id, payload)
+                if (response.isSuccessful) {
+                    loadRooms()
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to update room: ${response.message()}") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Update failed") }
             }
         }
     }

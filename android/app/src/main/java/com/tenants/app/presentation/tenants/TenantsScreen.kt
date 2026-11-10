@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -125,8 +126,13 @@ fun TenantsContent(
                                     )
                                 }
                             }
-                            IconButton(onClick = { onEvent(TenantsEvent.RequestDeleteTenant(tenant)) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Error)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { onEvent(TenantsEvent.RequestEditTenant(tenant)) }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Primary)
+                                }
+                                IconButton(onClick = { onEvent(TenantsEvent.RequestDeleteTenant(tenant)) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Error)
+                                }
                             }
                         }
                     }
@@ -218,6 +224,81 @@ fun TenantsContent(
                 },
                 dismissButton = {
                     TextButton(onClick = { onEvent(TenantsEvent.DismissAddDialog) }) {
+                        Text(stringResource(R.string.cancel_button))
+                    }
+                }
+            )
+        }
+
+        // Edit Tenant Dialog
+        state.tenantToEdit?.let { tenant ->
+            var editName by remember(tenant) { mutableStateOf(tenant.name) }
+            var editPhone by remember(tenant) { mutableStateOf(tenant.phone) }
+            var editMembers by remember(tenant) { mutableStateOf(tenant.familyMembersCount.toString()) }
+            var editRent by remember(tenant) { mutableStateOf(tenant.allottedPrice) }
+            var editElectricityRate by remember(tenant) { mutableStateOf(tenant.electricityRatePerUnit) }
+
+            AlertDialog(
+                onDismissRequest = { onEvent(TenantsEvent.DismissEditDialog) },
+                title = { Text("Edit ${tenant.name}") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = editName,
+                            onValueChange = { editName = it },
+                            label = { Text(stringResource(R.string.tenant_name_hint)) },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = editPhone,
+                            onValueChange = { editPhone = it },
+                            label = { Text(stringResource(R.string.phone_hint)) },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = editMembers,
+                            onValueChange = { editMembers = it },
+                            label = { Text(stringResource(R.string.members_count_hint)) },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = editRent,
+                            onValueChange = { editRent = it },
+                            label = { Text(stringResource(R.string.allotted_rent_hint)) },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = editElectricityRate,
+                            onValueChange = { editElectricityRate = it },
+                            label = { Text(stringResource(R.string.electricity_rate_hint)) },
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (editName.isNotBlank() && editPhone.isNotBlank()) {
+                                onEvent(
+                                    TenantsEvent.UpdateTenant(
+                                        id = tenant.id,
+                                        name = editName,
+                                        phone = editPhone,
+                                        membersCount = editMembers.toIntOrNull() ?: tenant.familyMembersCount,
+                                        rent = editRent.toDoubleOrNull() ?: tenant.allottedPrice.toDouble(),
+                                        electricityRate = editElectricityRate.toDoubleOrNull() ?: tenant.electricityRatePerUnit.toDouble()
+                                    )
+                                )
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                        shape = RoundedCornerShape(9999.dp)
+                    ) {
+                        Text(stringResource(R.string.confirm_button))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onEvent(TenantsEvent.DismissEditDialog) }) {
                         Text(stringResource(R.string.cancel_button))
                     }
                 }

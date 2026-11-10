@@ -49,6 +49,8 @@ This file acts as the project index. It documents every file created, its purpos
 - `backend/src/modules/export/export.test.ts`: TDD unit tests for CSV stringification and PDF buffer magic byte generation.
 - `backend/src/modules/export/export.controller.ts`: Endpoints for streaming PDF invoices and downloading CSV reports.
 - `backend/src/modules/export/export.routes.ts`: Routes for `/api/export`.
+- `backend/src/modules/upload/upload.util.ts`: Cloudinary image storage upload adapter with safe data URI fallback.
+- `backend/src/modules/upload/upload.routes.ts`: Multipart upload route (`/api/upload`) for tenant profile pictures and Aadhaar documents.
 - `backend/src/app.ts`: Express application initialization, CORS, route registration, and `/health` wakeup endpoint.
 - `backend/src/app.test.ts`: Sanity & health check test suite.
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -114,6 +115,9 @@ fun RoomsContent(
                                     )
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(onClick = { onEvent(RoomsEvent.RequestEditRoom(room)) }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Primary)
+                                }
                                 IconButton(onClick = { onEvent(RoomsEvent.RequestDeleteRoom(room)) }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Error)
                                 }
@@ -169,6 +173,51 @@ fun RoomsContent(
                 },
                 dismissButton = {
                     TextButton(onClick = { onEvent(RoomsEvent.DismissAddDialog) }) {
+                        Text(stringResource(R.string.cancel_button))
+                    }
+                }
+            )
+        }
+
+        // Edit Room Dialog
+        state.roomToEdit?.let { room ->
+            var editFloor by remember(room) { mutableStateOf(room.floor.toString()) }
+            var editBasePrice by remember(room) { mutableStateOf(room.basePrice) }
+
+            AlertDialog(
+                onDismissRequest = { onEvent(RoomsEvent.DismissEditDialog) },
+                title = { Text("Edit Room ${room.roomNo}") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = editFloor,
+                            onValueChange = { editFloor = it },
+                            label = { Text(stringResource(R.string.floor_hint)) },
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = editBasePrice,
+                            onValueChange = { editBasePrice = it },
+                            label = { Text(stringResource(R.string.base_price_hint)) },
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val floorInt = editFloor.toIntOrNull() ?: room.floor
+                            val priceDouble = editBasePrice.toDoubleOrNull() ?: room.basePrice.toDouble()
+                            onEvent(RoomsEvent.UpdateRoom(room.id, floorInt, priceDouble))
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary),
+                        shape = RoundedCornerShape(9999.dp)
+                    ) {
+                        Text(stringResource(R.string.confirm_button))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onEvent(RoomsEvent.DismissEditDialog) }) {
                         Text(stringResource(R.string.cancel_button))
                     }
                 }

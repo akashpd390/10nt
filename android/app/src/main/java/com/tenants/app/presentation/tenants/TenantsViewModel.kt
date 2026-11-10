@@ -16,6 +16,7 @@ data class TenantsUiState(
     val tenants: List<TenantDto> = emptyList(),
     val availableRooms: List<RoomDto> = emptyList(),
     val showAddDialog: Boolean = false,
+    val tenantToEdit: TenantDto? = null,
     val tenantToDelete: TenantDto? = null,
     val errorMessage: String? = null
 )
@@ -34,6 +35,16 @@ sealed interface TenantsEvent {
         val meterReading: Double,
         val openingBalance: Double
     ) : TenantsEvent
+    data class RequestEditTenant(val tenant: TenantDto) : TenantsEvent
+    data class UpdateTenant(
+        val id: String,
+        val name: String,
+        val phone: String,
+        val membersCount: Int,
+        val rent: Double,
+        val electricityRate: Double
+    ) : TenantsEvent
+    data object DismissEditDialog : TenantsEvent
     data class RequestDeleteTenant(val tenant: TenantDto) : TenantsEvent
     data object ConfirmDeleteTenant : TenantsEvent
     data object DismissDeleteDialog : TenantsEvent
@@ -57,6 +68,9 @@ class TenantsViewModel(
             is TenantsEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             is TenantsEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is TenantsEvent.CreateTenant -> createTenant(event)
+            is TenantsEvent.RequestEditTenant -> _uiState.update { it.copy(tenantToEdit = event.tenant) }
+            is TenantsEvent.UpdateTenant -> updateTenant(event)
+            is TenantsEvent.DismissEditDialog -> _uiState.update { it.copy(tenantToEdit = null) }
             is TenantsEvent.RequestDeleteTenant -> _uiState.update { it.copy(tenantToDelete = event.tenant) }
             is TenantsEvent.ConfirmDeleteTenant -> deleteTenant()
             is TenantsEvent.DismissDeleteDialog -> _uiState.update { it.copy(tenantToDelete = null) }
@@ -110,6 +124,29 @@ class TenantsViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Creation failed") }
+            }
+        }
+    }
+
+    private fun updateTenant(event: TenantsEvent.UpdateTenant) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, tenantToEdit = null) }
+            try {
+                val payload = mapOf(
+                    "name" to event.name,
+                    "phone" to event.phone,
+                    "familyMembersCount" to event.membersCount,
+                    "allottedPrice" to event.rent,
+                    "electricityRatePerUnit" to event.electricityRate
+                )
+                val response = apiService.updateTenant(event.id, payload)
+                if (response.isSuccessful) {
+                    loadData()
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to update tenant details") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Update failed") }
             }
         }
     }

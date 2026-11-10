@@ -14,6 +14,7 @@ import { tenantsRouter } from './modules/tenants/tenants.routes';
 import { paymentsRouter } from './modules/payments/payments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 import { exportRouter } from './modules/export/export.routes';
+import { uploadRouter } from './modules/upload/upload.routes';
 
 export const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/tenants', tenantsRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/upload', uploadRouter);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(env.PORT, () => {
