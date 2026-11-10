@@ -32,6 +32,7 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+
 // Feature Routes
 app.use('/api/auth', authRouter);
 app.use('/api/rooms', roomsRouter);
@@ -41,8 +42,11 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/upload', uploadRouter);
 
+
+
 if (process.env.NODE_ENV !== 'test') {
   app.listen(env.PORT, () => {
     console.log(`🚀 10nts backend server running on port ${env.PORT} [${env.NODE_ENV}]`);
+    console.log("https://localhost:5000");
   });
 }
