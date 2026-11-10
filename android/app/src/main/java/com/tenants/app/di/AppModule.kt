@@ -78,6 +78,7 @@ val appModule = module {
     }
 
     // ViewModels
+    viewModel { com.tenants.app.presentation.auth.AuthViewModel(get(), get()) }
     viewModel { com.tenants.app.presentation.dashboard.DashboardViewModel(get()) }
     viewModel { com.tenants.app.presentation.rooms.RoomsViewModel(get()) }
     viewModel { com.tenants.app.presentation.tenants.TenantsViewModel(get()) }

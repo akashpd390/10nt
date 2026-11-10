@@ -72,7 +72,10 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/utils/SmsSender.kt`: Dual-mode SMS abstraction (Interactive Intent default vs commented Direct SIM).
 - `android/app/src/main/java/com/tenants/app/di/AppModule.kt`: Koin DI module with cold-start network timeout interceptor.
 - `android/app/src/main/java/com/tenants/app/TenantsApplication.kt`: Application class initializing Koin.
-- `android/app/src/main/java/com/tenants/app/MainActivity.kt`: Main host activity with bottom navigation bar routing to Dashboard, Rooms, Tenants, and Payments.
+- `android/app/src/main/java/com/tenants/app/MainActivity.kt`: Main host activity with authentication session guard, conditional navigation bar, and routing to Login, Dashboard, Rooms, Tenants, and Payments.
+- `android/app/src/main/java/com/tenants/app/presentation/auth/AuthViewModel.kt`: Manages landlord login state, email/password validation, and token persistence in TokenManager.
+- `android/app/src/main/java/com/tenants/app/presentation/auth/LoginScreen.kt`: Jetpack Compose UI for landlord sign in with show/hide password toggle and standalone `@Preview`.
+- `android/app/src/test/java/com/tenants/app/presentation/auth/AuthViewModelTest.kt`: Unit test suite testing login success, token persistence, error handling, and logout.
 - `android/app/src/main/java/com/tenants/app/presentation/components/ConfirmationDialog.kt`: Reusable Material 3 confirmation dialog with preview.
 - `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardViewModel.kt`: Property metrics state management.
 - `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardScreen.kt`: Jetpack Compose UI for occupancy, finances, sorted unpaid list, recent transactions with `@Preview`.
