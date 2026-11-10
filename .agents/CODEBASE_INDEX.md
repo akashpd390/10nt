@@ -82,7 +82,12 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsViewModel.kt`: Rooms state management with occupancy validation.
 - `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsScreen.kt`: Rooms listing, creation dialog, and deletion safeguard with `@Preview`.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management and room allocation.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, opening balance setup, and arrears deletion protection with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, opening balance setup, item click navigation, and arrears deletion protection with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsViewModel.kt`: Tenant profile details, live balance inspection, and invoice PDF download state management.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsScreen.kt`: Jetpack Compose UI for tenant details, signed balance chip, and 1-tap "Download / Share PDF Invoice" button with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/utils/PdfDownloadHelper.kt`: FileProvider caching and Android share/view intent launcher for PDF invoice statements.
+- `android/app/src/main/res/xml/file_paths.xml`: FileProvider cache path mapping for invoice sharing.
+- `android/app/src/test/java/com/tenants/app/presentation/tenants/TenantDetailsViewModelTest.kt`: Unit test suite testing details loading and PDF stream caching/sharing dispatch.
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentViewModel.kt`: Payment entry state, tenant search filtering, and receipt generation.
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentScreen.kt`: Payment form, searchable tenant dropdown, quick stats, and post-payment SMS receipt prompt with `@Preview`.
 - `android/app/src/test/java/com/tenants/app/presentation/payments/PaymentViewModelTest.kt`: Unit tests for tenant selection auto-population and search filtering.

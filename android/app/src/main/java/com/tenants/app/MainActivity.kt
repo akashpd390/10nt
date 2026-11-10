@@ -23,6 +23,7 @@ import com.tenants.app.presentation.auth.LoginScreen
 import com.tenants.app.presentation.dashboard.DashboardScreen
 import com.tenants.app.presentation.payments.PaymentScreen
 import com.tenants.app.presentation.rooms.RoomsScreen
+import com.tenants.app.presentation.tenants.TenantDetailsScreen
 import com.tenants.app.presentation.tenants.TenantsScreen
 import com.tenants.app.presentation.theme.Primary
 import com.tenants.app.presentation.theme.Surface
@@ -35,6 +36,9 @@ sealed class Screen(val route: String, val titleRes: Int, val icon: androidx.com
     data object Rooms : Screen("rooms", R.string.nav_rooms, Icons.Default.MeetingRoom)
     data object Tenants : Screen("tenants", R.string.nav_tenants, Icons.Default.People)
     data object Payments : Screen("payments", R.string.nav_payments, Icons.Default.Payment)
+    data object TenantDetails : Screen("tenant_details/{tenantId}", R.string.nav_tenants, Icons.Default.People) {
+        fun createRoute(tenantId: String) = "tenant_details/$tenantId"
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -49,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route
+                val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route && currentRoute?.startsWith("tenant_details") != true
 
                 Scaffold(
                     bottomBar = {
@@ -94,8 +98,21 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.Dashboard.route) { DashboardScreen() }
                         composable(Screen.Rooms.route) { RoomsScreen() }
-                        composable(Screen.Tenants.route) { TenantsScreen() }
+                        composable(Screen.Tenants.route) {
+                            TenantsScreen(
+                                onTenantClick = { tenantId ->
+                                    navController.navigate(Screen.TenantDetails.createRoute(tenantId))
+                                }
+                            )
+                        }
                         composable(Screen.Payments.route) { PaymentScreen() }
+                        composable(Screen.TenantDetails.route) { backStackEntry ->
+                            val tenantId = backStackEntry.arguments?.getString("tenantId") ?: ""
+                            TenantDetailsScreen(
+                                tenantId = tenantId,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
                     }
                 }
             }

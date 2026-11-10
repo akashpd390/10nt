@@ -26,16 +26,24 @@ import com.tenants.app.presentation.theme.*
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun TenantsScreen(viewModel: TenantsViewModel = koinViewModel()) {
+fun TenantsScreen(
+    viewModel: TenantsViewModel = koinViewModel(),
+    onTenantClick: (String) -> Unit = {}
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    TenantsContent(state = state, onEvent = viewModel::onEvent)
+    TenantsContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onTenantClick = onTenantClick
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TenantsContent(
     state: TenantsUiState,
-    onEvent: (TenantsEvent) -> Unit
+    onEvent: (TenantsEvent) -> Unit,
+    onTenantClick: (String) -> Unit = {}
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -79,7 +87,9 @@ fun TenantsContent(
             ) {
                 items(state.tenants) { tenant ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onTenantClick(tenant.id) },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
                     ) {
