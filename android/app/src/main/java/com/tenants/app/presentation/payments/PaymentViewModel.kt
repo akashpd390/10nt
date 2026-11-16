@@ -50,6 +50,17 @@ class PaymentViewModel(
 
     init {
         loadTenants()
+        observeSyncEvents()
+    }
+
+    private fun observeSyncEvents() {
+        viewModelScope.launch {
+            com.tenants.app.data.local.DataSyncBus.syncEvents.collect { topic ->
+                if (topic == com.tenants.app.data.local.SyncTopic.TENANTS || topic == com.tenants.app.data.local.SyncTopic.ALL) {
+                    loadTenants()
+                }
+            }
+        }
     }
 
     fun onEvent(event: PaymentEvent) {
@@ -131,6 +142,8 @@ class PaymentViewModel(
                 )
                 val response = apiService.createPayment(request)
                 if (response.isSuccessful && response.body() != null) {
+                    com.tenants.app.data.local.DataSyncBus.emitChange(com.tenants.app.data.local.SyncTopic.TENANTS)
+                    com.tenants.app.data.local.DataSyncBus.emitChange(com.tenants.app.data.local.SyncTopic.DASHBOARD)
                     _uiState.update {
                         it.copy(
                             isLoading = false,

@@ -2,6 +2,8 @@ package com.tenants.app.presentation.tenants
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tenants.app.data.local.DataSyncBus
+import com.tenants.app.data.local.SyncTopic
 import com.tenants.app.data.remote.TenantsApiService
 import com.tenants.app.data.remote.model.CreateTenantRequest
 import com.tenants.app.data.remote.model.RoomDto
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 
 data class TenantsUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val tenants: List<TenantDto> = emptyList(),
     val availableRooms: List<RoomDto> = emptyList(),
     val showAddDialog: Boolean = false,
@@ -65,12 +68,23 @@ class TenantsViewModel(
     val uiState: StateFlow<TenantsUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        loadData(isSilent = false)
+        observeSyncEvents()
+    }
+
+    private fun observeSyncEvents() {
+        viewModelScope.launch {
+            DataSyncBus.syncEvents.collect { topic ->
+                if (topic == SyncTopic.TENANTS || topic == SyncTopic.ALL) {
+                    loadData(isSilent = true)
+                }
+            }
+        }
     }
 
     fun onEvent(event: TenantsEvent) {
         when (event) {
-            is TenantsEvent.Refresh -> loadData()
+            is TenantsEvent.Refresh -> loadData(isSilent = false)
             is TenantsEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             is TenantsEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is TenantsEvent.CreateTenant -> createTenant(event)
@@ -85,9 +99,15 @@ class TenantsViewModel(
         }
     }
 
-    private fun loadData() {
+    fun loadData(isSilent: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            if (!isSilent) {
+                if (_uiState.value.tenants.isNotEmpty()) {
+                    _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+                } else {
+                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                }
+            }
             try {
                 val tenantsRes = apiService.getTenants()
                 val roomsRes = apiService.getRooms()
@@ -99,12 +119,20 @@ class TenantsViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         tenants = tenantsList,
-                        availableRooms = vacantRooms
+                        availableRooms = vacantRooms,
+                        errorMessage = null
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Network error") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        errorMessage = e.localizedMessage ?: "Network error"
+                    )
+                }
             }
         }
     }
@@ -126,7 +154,9 @@ class TenantsViewModel(
                 val response = apiService.createTenant(request)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Tenant ${event.name} registered successfully") }
-                    loadData()
+                    DataSyncBus.emitChange(SyncTopic.ROOMS)
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    loadData(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -152,7 +182,9 @@ class TenantsViewModel(
                 val response = apiService.updateTenant(event.id, request)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Tenant updated successfully") }
-                    loadData()
+                    DataSyncBus.emitChange(SyncTopic.ROOMS)
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    loadData(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -171,7 +203,9 @@ class TenantsViewModel(
                 val response = apiService.deleteTenant(tenant.id)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Tenant ${tenant.name} removed successfully") }
-                    loadData()
+                    DataSyncBus.emitChange(SyncTopic.ROOMS)
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    loadData(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }

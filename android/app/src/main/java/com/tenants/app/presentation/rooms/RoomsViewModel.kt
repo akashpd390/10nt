@@ -2,6 +2,8 @@ package com.tenants.app.presentation.rooms
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tenants.app.data.local.DataSyncBus
+import com.tenants.app.data.local.SyncTopic
 import com.tenants.app.data.remote.TenantsApiService
 import com.tenants.app.data.remote.model.CreateRoomRequest
 import com.tenants.app.data.remote.model.RoomDto
@@ -15,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class RoomsUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val rooms: List<RoomDto> = emptyList(),
     val showAddDialog: Boolean = false,
     val roomToEdit: RoomDto? = null,
@@ -46,12 +49,23 @@ class RoomsViewModel(
     val uiState: StateFlow<RoomsUiState> = _uiState.asStateFlow()
 
     init {
-        loadRooms()
+        loadRooms(isSilent = false)
+        observeSyncEvents()
+    }
+
+    private fun observeSyncEvents() {
+        viewModelScope.launch {
+            DataSyncBus.syncEvents.collect { topic ->
+                if (topic == SyncTopic.ROOMS || topic == SyncTopic.ALL) {
+                    loadRooms(isSilent = true)
+                }
+            }
+        }
     }
 
     fun onEvent(event: RoomsEvent) {
         when (event) {
-            is RoomsEvent.Refresh -> loadRooms()
+            is RoomsEvent.Refresh -> loadRooms(isSilent = false)
             is RoomsEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             is RoomsEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is RoomsEvent.CreateRoom -> createRoom(event.roomNo, event.floor, event.basePrice, event.description)
@@ -66,19 +80,43 @@ class RoomsViewModel(
         }
     }
 
-    private fun loadRooms() {
+    fun loadRooms(isSilent: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            if (!isSilent) {
+                if (_uiState.value.rooms.isNotEmpty()) {
+                    _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+                } else {
+                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                }
+            }
             try {
                 val response = apiService.getRooms()
                 if (response.isSuccessful && response.body() != null) {
-                    _uiState.update { it.copy(isLoading = false, rooms = response.body()!!.rooms) }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            rooms = response.body()!!.rooms
+                        )
+                    }
                 } else {
                     val errMsg = parseApiError(response)
-                    _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            errorMessage = errMsg
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Network error") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        errorMessage = e.localizedMessage ?: "Network error"
+                    )
+                }
             }
         }
     }
@@ -96,7 +134,9 @@ class RoomsViewModel(
                 val response = apiService.createRoom(request)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Room $roomNo created successfully") }
-                    loadRooms()
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    DataSyncBus.emitChange(SyncTopic.TENANTS)
+                    loadRooms(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -119,7 +159,9 @@ class RoomsViewModel(
                 val response = apiService.updateRoom(id, request)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Room updated successfully") }
-                    loadRooms()
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    DataSyncBus.emitChange(SyncTopic.TENANTS)
+                    loadRooms(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -138,7 +180,9 @@ class RoomsViewModel(
                 val response = apiService.deleteRoom(room.id)
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(successMessage = "Room ${room.roomNo} deleted successfully") }
-                    loadRooms()
+                    DataSyncBus.emitChange(SyncTopic.DASHBOARD)
+                    DataSyncBus.emitChange(SyncTopic.TENANTS)
+                    loadRooms(isSilent = false)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }

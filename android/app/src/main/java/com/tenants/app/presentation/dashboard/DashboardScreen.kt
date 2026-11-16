@@ -1,5 +1,11 @@
 package com.tenants.app.presentation.dashboard
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,16 +17,20 @@ import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tenants.app.R
 import com.tenants.app.data.remote.model.*
 import com.tenants.app.presentation.theme.*
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -59,6 +70,21 @@ fun DashboardContent(
     onLogoutClick: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val refreshRotation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Smooth continuous spin when refreshing
+    LaunchedEffect(state.isRefreshing) {
+        if (state.isRefreshing) {
+            refreshRotation.animateTo(
+                targetValue = refreshRotation.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 750, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -69,8 +95,21 @@ fun DashboardContent(
                     titleContentColor = Primary
                 ),
                 actions = {
-                    IconButton(onClick = { onEvent(DashboardEvent.Refresh) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Primary)
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            refreshRotation.animateTo(
+                                targetValue = refreshRotation.value + 360f,
+                                animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+                            )
+                        }
+                        onEvent(DashboardEvent.Refresh)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = Primary,
+                            modifier = Modifier.rotate(refreshRotation.value)
+                        )
                     }
                     IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More Options", tint = Primary)
@@ -81,7 +120,7 @@ fun DashboardContent(
                     ) {
                         DropdownMenuItem(
                             text = { Text("Sign Out", color = Error, fontWeight = FontWeight.SemiBold) },
-                            leadingIcon = { Icon(Icons.Default.Logout, contentDescription = null, tint = Error) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = Error) },
                             onClick = {
                                 showMenu = false
                                 onLogoutClick()
@@ -93,12 +132,17 @@ fun DashboardContent(
         },
         containerColor = Surface
     ) { paddingValues ->
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onEvent(DashboardEvent.Refresh) },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
         when {
             state.isLoading && state.data == null -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -112,7 +156,6 @@ fun DashboardContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -149,7 +192,6 @@ fun DashboardContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -167,15 +209,13 @@ fun DashboardContent(
                 }
             }
             else -> {
-                val data = state.data
-                if (data != null) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                val data = state.data!!
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                         // Occupancy & Tenants Summary Cards
                         item {
                             Row(

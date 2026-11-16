@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,111 +109,116 @@ fun RoomsContent(
         },
         containerColor = Surface
     ) { paddingValues ->
-        if (state.isLoading && state.rooms.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Primary)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(state.rooms, key = { it.id }) { room ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onEvent(RoomsEvent.Refresh) },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (state.isLoading && state.rooms.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Primary)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(state.rooms, key = { it.id }) { room ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
                         ) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(
-                                            color = if (room.isOccupied) SurfaceContainerHighest else SecondaryContainer,
-                                            shape = CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.MeetingRoom,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "Room ${room.roomNo}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                    Text(
-                                        text = "Floor ${room.floor} • Base: ₹${room.basePrice}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Outline
-                                    )
-                                    room.description?.takeIf { it.isNotBlank() }?.let { desc ->
-                                        Text(
-                                            text = desc,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OutlineVariant,
-                                            maxLines = 1
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .background(
+                                                color = if (room.isOccupied) SurfaceContainerHighest else SecondaryContainer,
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.MeetingRoom,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
-                                }
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                SuggestionChip(
-                                    onClick = {},
-                                    label = {
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
                                         Text(
-                                            text = if (room.isOccupied) stringResource(R.string.occupied_badge)
-                                            else stringResource(R.string.vacant_badge),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.SemiBold
+                                            text = "Room ${room.roomNo}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OnSurface
                                         )
-                                    },
-                                    colors = SuggestionChipDefaults.suggestionChipColors(
-                                        containerColor = if (room.isOccupied) SurfaceContainerHighest else SecondaryContainer,
-                                        labelColor = if (room.isOccupied) Outline else Primary
-                                    ),
-                                    border = null,
-                                    shape = RoundedCornerShape(9999.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                IconButton(onClick = { onEvent(RoomsEvent.RequestEditRoom(room)) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = stringResource(R.string.edit_room),
-                                        tint = Primary
-                                    )
+                                        Text(
+                                            text = "Floor ${room.floor} • Base: ₹${room.basePrice}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Outline
+                                        )
+                                        room.description?.takeIf { it.isNotBlank() }?.let { desc ->
+                                            Text(
+                                                text = desc,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = OutlineVariant,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
                                 }
-                                IconButton(onClick = { onEvent(RoomsEvent.RequestDeleteRoom(room)) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.delete_button),
-                                        tint = Error
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    SuggestionChip(
+                                        onClick = {},
+                                        label = {
+                                            Text(
+                                                text = if (room.isOccupied) stringResource(R.string.occupied_badge)
+                                                else stringResource(R.string.vacant_badge),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        },
+                                        colors = SuggestionChipDefaults.suggestionChipColors(
+                                            containerColor = if (room.isOccupied) SurfaceContainerHighest else SecondaryContainer,
+                                            labelColor = if (room.isOccupied) Outline else Primary
+                                        ),
+                                        border = null,
+                                        shape = RoundedCornerShape(9999.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    IconButton(onClick = { onEvent(RoomsEvent.RequestEditRoom(room)) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = stringResource(R.string.edit_room),
+                                            tint = Primary
+                                        )
+                                    }
+                                    IconButton(onClick = { onEvent(RoomsEvent.RequestDeleteRoom(room)) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.delete_button),
+                                            tint = Error
+                                        )
+                                    }
                                 }
                             }
                         }

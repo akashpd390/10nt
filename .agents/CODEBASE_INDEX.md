@@ -68,6 +68,7 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/theme/Type.kt`: Roboto Flex typography scales.
 - `android/app/src/main/java/com/tenants/app/presentation/theme/Theme.kt`: Jetpack Compose Material 3 Theme wrapper.
 - `android/app/src/main/java/com/tenants/app/data/local/TokenManager.kt`: EncryptedSharedPreferences for AES-256 JWT persistence.
+- `android/app/src/main/java/com/tenants/app/data/local/DataSyncBus.kt`: Shared Kotlin Flow event bus for reactive cross-module data synchronization (ROOMS, TENANTS, DASHBOARD, ALL).
 - `android/app/src/main/java/com/tenants/app/data/remote/model/ApiModels.kt`: DTOs for Auth, Dashboard, Rooms, Tenants, Payments, and strongly typed requests (`CreateRoomRequest`, `CreateTenantRequest`, `parseApiError`).
 - `android/app/src/main/java/com/tenants/app/data/remote/TenantsApiService.kt`: Retrofit client definition using typed DTO requests.
 - `android/app/src/main/java/com/tenants/app/data/remote/TokenAuthenticator.kt`: Silent JWT token rotation with 60s timeout for Render cold-starts.

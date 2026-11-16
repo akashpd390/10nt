@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,96 +120,101 @@ fun TenantsContent(
         },
         containerColor = Surface
     ) { paddingValues ->
-        if (state.isLoading && state.tenants.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Primary)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(state.tenants, key = { it.id }) { tenant ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onTenantClick(tenant.id) },
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
-                    ) {
-                        Row(
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onEvent(TenantsEvent.Refresh) },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (state.isLoading && state.tenants.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Primary)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(state.tenants, key = { it.id }) { tenant ->
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .clickable { onTenantClick(tenant.id) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
                         ) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(
-                                            color = if (tenant.isActive) SecondaryContainer else SurfaceContainerHighest,
-                                            shape = CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(22.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .background(
+                                                color = if (tenant.isActive) SecondaryContainer else SurfaceContainerHighest,
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = tenant.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OnSurface
+                                        )
+                                        Text(
+                                            text = "Room ${tenant.room?.roomNo ?: "None"} • ${tenant.phone}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Outline
+                                        )
+                                        val bal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
+                                        Text(
+                                            text = if (bal < 0) "Due: ₹${"%.2f".format(kotlin.math.abs(bal))}"
+                                            else if (bal > 0) "Advance: ₹${"%.2f".format(bal)}"
+                                            else "Settled",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (bal < 0) Error else Primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = tenant.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                    Text(
-                                        text = "Room ${tenant.room?.roomNo ?: "None"} • ${tenant.phone}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Outline
-                                    )
-                                    val bal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
-                                    Text(
-                                        text = if (bal < 0) "Due: ₹${"%.2f".format(kotlin.math.abs(bal))}"
-                                        else if (bal > 0) "Advance: ₹${"%.2f".format(bal)}"
-                                        else "Settled",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (bal < 0) Error else Primary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = { onEvent(TenantsEvent.RequestEditTenant(tenant)) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = stringResource(R.string.edit_tenant),
-                                        tint = Primary
-                                    )
-                                }
-                                IconButton(onClick = { onEvent(TenantsEvent.RequestDeleteTenant(tenant)) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.delete_button),
-                                        tint = Error
-                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { onEvent(TenantsEvent.RequestEditTenant(tenant)) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = stringResource(R.string.edit_tenant),
+                                            tint = Primary
+                                        )
+                                    }
+                                    IconButton(onClick = { onEvent(TenantsEvent.RequestDeleteTenant(tenant)) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.delete_button),
+                                            tint = Error
+                                        )
+                                    }
                                 }
                             }
                         }
