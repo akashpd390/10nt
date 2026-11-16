@@ -15,13 +15,15 @@ import kotlinx.coroutines.launch
 
 data class DashboardUiState(
     val isLoading: Boolean = false,
-    val isRefreshing: Boolean = false,
+    val isRefreshing: Boolean = false, // TopAppBar icon spinning state
+    val isPullRefreshing: Boolean = false, // PullToRefreshBox drop-down indicator state
     val data: DashboardResponse? = null,
     val errorMessage: String? = null
 )
 
 sealed interface DashboardEvent {
-    data object Refresh : DashboardEvent
+    data object Refresh : DashboardEvent // TopAppBar icon tap
+    data object PullRefresh : DashboardEvent // PullToRefreshBox swipe gesture
     data object ClearError : DashboardEvent
 }
 
@@ -52,15 +54,18 @@ class DashboardViewModel(
 
     fun onEvent(event: DashboardEvent) {
         when (event) {
-            is DashboardEvent.Refresh -> loadDashboard(isSilent = false)
+            is DashboardEvent.Refresh -> loadDashboard(isSilent = false, isPullRefresh = false)
+            is DashboardEvent.PullRefresh -> loadDashboard(isSilent = false, isPullRefresh = true)
             is DashboardEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
         }
     }
 
-    fun loadDashboard(isSilent: Boolean = false) {
+    fun loadDashboard(isSilent: Boolean = false, isPullRefresh: Boolean = false) {
         viewModelScope.launch {
             if (!isSilent) {
-                if (_uiState.value.data != null) {
+                if (isPullRefresh) {
+                    _uiState.update { it.copy(isPullRefreshing = true, errorMessage = null) }
+                } else if (_uiState.value.data != null) {
                     _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
                 } else {
                     _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -73,6 +78,7 @@ class DashboardViewModel(
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
+                            isPullRefreshing = false,
                             data = response.body(),
                             errorMessage = null
                         )
@@ -83,6 +89,7 @@ class DashboardViewModel(
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
+                            isPullRefreshing = false,
                             errorMessage = errMsg
                         )
                     }
@@ -92,6 +99,7 @@ class DashboardViewModel(
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
+                        isPullRefreshing = false,
                         errorMessage = e.localizedMessage ?: "Network error"
                     )
                 }

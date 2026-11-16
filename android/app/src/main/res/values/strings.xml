@@ -64,6 +64,13 @@
     <!-- Payments -->
     <string name="record_payment_title">Record Manual Payment</string>
     <string name="select_tenant">Select Tenant</string>
+    <string name="tap_to_choose_tenant">Tap to choose tenant</string>
+    <string name="search_tenant_hint">Search by name or room…</string>
+    <string name="select_vacant_room_hint">Tap to select a vacant room</string>
+    <string name="current_balance_label">Current Balance</string>
+    <string name="last_meter_reading_label">Last Meter Reading</string>
+    <string name="current_electricity_reading_hint">Current Meter Reading (Units)</string>
+    <string name="payment_mode_label">Payment Mode</string>
     <string name="amount_paid_hint">Amount Paid (₹)</string>
     <string name="payment_mode_cash">Cash</string>
     <string name="payment_mode_upi">UPI</string>

@@ -12,7 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -109,9 +109,20 @@ fun RoomsContent(
         },
         containerColor = Surface
     ) { paddingValues ->
+        val pullRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onEvent(RoomsEvent.Refresh) },
+            isRefreshing = state.isPullRefreshing,
+            onRefresh = { onEvent(RoomsEvent.PullRefresh) },
+            state = pullRefreshState,
+            indicator = {
+                PullToRefreshDefaults.Indicator(
+                    state = pullRefreshState,
+                    isRefreshing = state.isPullRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    containerColor = SurfaceContainerHigh,
+                    color = Primary
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)

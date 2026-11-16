@@ -14,7 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -120,9 +120,20 @@ fun TenantsContent(
         },
         containerColor = Surface
     ) { paddingValues ->
+        val pullRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onEvent(TenantsEvent.Refresh) },
+            isRefreshing = state.isPullRefreshing,
+            onRefresh = { onEvent(TenantsEvent.PullRefresh) },
+            state = pullRefreshState,
+            indicator = {
+                PullToRefreshDefaults.Indicator(
+                    state = pullRefreshState,
+                    isRefreshing = state.isPullRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    containerColor = SurfaceContainerHigh,
+                    color = Primary
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -276,7 +287,7 @@ private fun AddTenantDialog(
     var hasAttemptedSubmit by remember { mutableStateOf(false) }
 
     val isNameValid = name.trim().isNotBlank()
-    val isPhoneValid = phone.trim().length >= 10
+    val isPhoneValid = phone.trim().length == 10
     val isRoomSelected = selectedRoomId.isNotBlank()
     val isRentValid = (rent.toDoubleOrNull() ?: 0.0) > 0.0
 
@@ -314,7 +325,7 @@ private fun AddTenantDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Room Allocation Section
+                // Room Allocation Dropdown Section
                 Text(
                     text = stringResource(R.string.select_room_label),
                     style = MaterialTheme.typography.labelLarge,
@@ -342,47 +353,102 @@ private fun AddTenantDialog(
                         }
                     }
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        availableRooms.forEach { room ->
-                            val isSelected = selectedRoomId == room.id
-                            Surface(
+                    var isRoomDropdownOpen by remember { mutableStateOf(false) }
+                    val selectedRoom = availableRooms.firstOrNull { it.id == selectedRoomId }
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isRoomDropdownOpen = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.outlinedCardColors(containerColor = SurfaceContainerLow),
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 1.dp,
+                                color = if (selectedRoom != null) Primary else OutlineVariant
+                            )
+                        ) {
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        selectedRoomId = room.id
-                                        rent = room.basePrice
-                                    },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) SecondaryContainer else SurfaceContainerLow,
-                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, Primary) else null
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    RadioButton(
-                                        selected = isSelected,
-                                        onClick = {
-                                            selectedRoomId = room.id
-                                            rent = room.basePrice
-                                        },
-                                        colors = RadioButtonDefaults.colors(selectedColor = Primary)
+                                    Icon(
+                                        imageVector = Icons.Default.MeetingRoom,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(22.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
-                                            text = "Room ${room.roomNo} (Floor ${room.floor})",
+                                            text = selectedRoom?.let { "Room ${it.roomNo} (Floor ${it.floor})" }
+                                                ?: stringResource(R.string.select_vacant_room_hint),
                                             style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = OnSurface
                                         )
-                                        Text(
-                                            text = "Base Rent: ₹${room.basePrice}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Outline
-                                        )
+                                        if (selectedRoom != null) {
+                                            Text(
+                                                text = "Base Rent: ₹${selectedRoom.basePrice}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Outline
+                                            )
+                                        }
                                     }
                                 }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = Primary
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = isRoomDropdownOpen,
+                            onDismissRequest = { isRoomDropdownOpen = false },
+                            modifier = Modifier
+                                .fillMaxWidth(0.85f)
+                                .background(SurfaceContainerHigh)
+                        ) {
+                            availableRooms.forEach { room ->
+                                val isSelected = room.id == selectedRoomId
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = "Room ${room.roomNo} (Floor ${room.floor})",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) Primary else OnSurface
+                                            )
+                                            Text(
+                                                text = "Base Rent: ₹${room.basePrice}${if (room.description.isNullOrBlank()) "" else " • ${room.description}"}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Outline
+                                            )
+                                        }
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.MeetingRoom,
+                                            contentDescription = null,
+                                            tint = if (isSelected) Primary else Outline
+                                        )
+                                    },
+                                    onClick = {
+                                        selectedRoomId = room.id
+                                        rent = room.basePrice
+                                        isRoomDropdownOpen = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -413,7 +479,12 @@ private fun AddTenantDialog(
 
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { phone = it },
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }
+                        if (digits.length <= 10) {
+                            phone = digits
+                        }
+                    },
                     label = { Text(stringResource(R.string.phone_hint)) },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Primary) },
                     singleLine = true,
@@ -428,7 +499,12 @@ private fun AddTenantDialog(
 
                 OutlinedTextField(
                     value = membersCount,
-                    onValueChange = { membersCount = it },
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }
+                        if (digits.length <= 2) {
+                            membersCount = digits
+                        }
+                    },
                     label = { Text(stringResource(R.string.members_count_hint)) },
                     leadingIcon = { Icon(Icons.Default.Group, contentDescription = null, tint = Primary) },
                     singleLine = true,
@@ -555,6 +631,10 @@ private fun EditTenantDialog(
     var editRent by remember(tenant) { mutableStateOf(tenant.allottedPrice) }
     var editElectricityRate by remember(tenant) { mutableStateOf(tenant.electricityRatePerUnit) }
     var isActive by remember(tenant) { mutableStateOf(tenant.isActive) }
+    var hasAttemptedSubmit by remember { mutableStateOf(false) }
+
+    val isNameValid = editName.trim().isNotBlank()
+    val isPhoneValid = editPhone.trim().length == 10
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -597,17 +677,30 @@ private fun EditTenantDialog(
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Primary) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
+                    isError = hasAttemptedSubmit && !isNameValid,
+                    supportingText = if (hasAttemptedSubmit && !isNameValid) {
+                        { Text(stringResource(R.string.tenant_name_required), color = Error) }
+                    } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = editPhone,
-                    onValueChange = { editPhone = it },
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }
+                        if (digits.length <= 10) {
+                            editPhone = digits
+                        }
+                    },
                     label = { Text(stringResource(R.string.phone_hint)) },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Primary) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     shape = RoundedCornerShape(12.dp),
+                    isError = hasAttemptedSubmit && !isPhoneValid,
+                    supportingText = if (hasAttemptedSubmit && !isPhoneValid) {
+                        { Text(stringResource(R.string.phone_invalid), color = Error) }
+                    } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -686,10 +779,13 @@ private fun EditTenantDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val membersInt = editMembers.toIntOrNull() ?: tenant.familyMembersCount
-                    val rentDouble = editRent.toDoubleOrNull() ?: tenant.allottedPrice.toDoubleOrNull() ?: 0.0
-                    val electricityDouble = editElectricityRate.toDoubleOrNull() ?: tenant.electricityRatePerUnit.toDoubleOrNull() ?: 8.0
-                    onConfirm(tenant.id, editName.trim(), editPhone.trim(), membersInt, rentDouble, electricityDouble, isActive)
+                    hasAttemptedSubmit = true
+                    if (isNameValid && isPhoneValid) {
+                        val membersInt = editMembers.toIntOrNull() ?: tenant.familyMembersCount
+                        val rentDouble = editRent.toDoubleOrNull() ?: tenant.allottedPrice.toDoubleOrNull() ?: 0.0
+                        val electricityDouble = editElectricityRate.toDoubleOrNull() ?: tenant.electricityRatePerUnit.toDoubleOrNull() ?: 8.0
+                        onConfirm(tenant.id, editName.trim(), editPhone.trim(), membersInt, rentDouble, electricityDouble, isActive)
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Primary,

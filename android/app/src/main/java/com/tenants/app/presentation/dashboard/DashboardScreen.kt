@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -132,9 +132,20 @@ fun DashboardContent(
         },
         containerColor = Surface
     ) { paddingValues ->
+        val pullRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onEvent(DashboardEvent.Refresh) },
+            isRefreshing = state.isPullRefreshing,
+            onRefresh = { onEvent(DashboardEvent.PullRefresh) },
+            state = pullRefreshState,
+            indicator = {
+                PullToRefreshDefaults.Indicator(
+                    state = pullRefreshState,
+                    isRefreshing = state.isPullRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    containerColor = SurfaceContainerHigh,
+                    color = Primary
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)

@@ -13,7 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +102,12 @@ fun PaymentContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isDropdownExpanded = true },
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = SurfaceContainerLow),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = if (state.selectedTenant != null) Primary else OutlineVariant
+                    )
                 ) {
                     Row(
                         modifier = Modifier
@@ -114,41 +121,75 @@ fun PaymentContent(
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = state.selectedTenant?.let { "${it.name} (Room ${it.room?.roomNo ?: "N/A"})" }
-                                    ?: "Tap to choose tenant",
-                                style = MaterialTheme.typography.bodyMedium
+                                    ?: stringResource(R.string.tap_to_choose_tenant),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (state.selectedTenant != null) FontWeight.SemiBold else FontWeight.Normal,
+                                color = OnSurface
                             )
                         }
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Outline)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Primary)
                     }
                 }
 
                 DropdownMenu(
                     expanded = isDropdownExpanded,
                     onDismissRequest = { isDropdownExpanded = false },
-                    modifier = Modifier.fillMaxWidth(0.9f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(SurfaceContainerHigh)
                 ) {
                     // Search Filter Field inside dropdown
                     OutlinedTextField(
                         value = state.searchQuery,
                         onValueChange = { onEvent(PaymentEvent.SearchQueryChanged(it)) },
-                        placeholder = { Text("Search by name or room...") },
+                        placeholder = { Text(stringResource(R.string.search_tenant_hint), color = Outline) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Primary) },
+                        trailingIcon = if (state.searchQuery.isNotBlank()) {
+                            {
+                                IconButton(onClick = { onEvent(PaymentEvent.SearchQueryChanged("")) }) {
+                                    Icon(Icons.Default.Clear, contentDescription = null, tint = Outline)
+                                }
+                            }
+                        } else null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
-                        singleLine = true
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = OutlineVariant,
+                            cursorColor = Primary,
+                            focusedTextColor = OnSurface,
+                            unfocusedTextColor = OnSurface,
+                            focusedContainerColor = SurfaceContainerLowest,
+                            unfocusedContainerColor = SurfaceContainerLowest
+                        )
                     )
 
                     state.filteredTenants.forEach { tenant ->
+                        val isSelected = tenant.id == state.selectedTenant?.id
                         DropdownMenuItem(
                             text = {
                                 Column {
-                                    Text(tenant.name, fontWeight = FontWeight.Bold)
                                     Text(
-                                        "Room: ${tenant.room?.roomNo ?: "N/A"} • Rent: ₹${tenant.allottedPrice}",
+                                        text = tenant.name,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isSelected) Primary else OnSurface
+                                    )
+                                    Text(
+                                        text = "Room: ${tenant.room?.roomNo ?: "N/A"} • Rent: ₹${tenant.allottedPrice}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Outline
                                     )
                                 }
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = if (isSelected) Primary else Outline
+                                )
                             },
                             onClick = {
                                 onEvent(PaymentEvent.TenantSelected(tenant))
@@ -173,7 +214,7 @@ fun PaymentContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("Current Balance", style = MaterialTheme.typography.labelSmall, color = Outline)
+                            Text(stringResource(R.string.current_balance_label), style = MaterialTheme.typography.labelSmall, color = Outline)
                             val bal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
                             Text(
                                 text = if (bal < 0) "Due: ₹${"%.2f".format(kotlin.math.abs(bal))}"
@@ -184,8 +225,8 @@ fun PaymentContent(
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Last Meter Reading", style = MaterialTheme.typography.labelSmall, color = Outline)
-                            Text("${tenant.lastMeterReading} units", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.last_meter_reading_label), style = MaterialTheme.typography.labelSmall, color = Outline)
+                            Text("${tenant.lastMeterReading} units", fontWeight = FontWeight.Bold, color = OnSurface)
                         }
                     }
                 }
@@ -198,6 +239,12 @@ fun PaymentContent(
                 label = { Text(stringResource(R.string.amount_paid_hint)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    unfocusedBorderColor = OutlineVariant,
+                    focusedLabelColor = Primary,
+                    cursorColor = Primary
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -205,15 +252,21 @@ fun PaymentContent(
             OutlinedTextField(
                 value = state.currentElectricityReading,
                 onValueChange = { onEvent(PaymentEvent.ElectricityReadingChanged(it)) },
-                label = { Text("Current Electricity Reading (Units)") },
+                label = { Text(stringResource(R.string.current_electricity_reading_hint)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    unfocusedBorderColor = OutlineVariant,
+                    focusedLabelColor = Primary,
+                    cursorColor = Primary
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Payment Mode Selector (Cash / UPI / Bank Transfer)
             Text(
-                text = "Payment Mode",
+                text = stringResource(R.string.payment_mode_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = Primary,
                 fontWeight = FontWeight.Bold
@@ -227,7 +280,13 @@ fun PaymentContent(
                         selected = state.paymentMode == mode,
                         onClick = { onEvent(PaymentEvent.PaymentModeChanged(mode)) },
                         label = { Text(mode) },
-                        shape = RoundedCornerShape(9999.dp)
+                        shape = RoundedCornerShape(9999.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary,
+                            selectedLabelColor = OnPrimary,
+                            containerColor = SurfaceContainerLow,
+                            labelColor = OnSurface
+                        )
                     )
                 }
             }
@@ -238,6 +297,12 @@ fun PaymentContent(
                 onValueChange = { onEvent(PaymentEvent.NotesChanged(it)) },
                 label = { Text(stringResource(R.string.notes_hint)) },
                 shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Primary,
+                    unfocusedBorderColor = OutlineVariant,
+                    focusedLabelColor = Primary,
+                    cursorColor = Primary
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 

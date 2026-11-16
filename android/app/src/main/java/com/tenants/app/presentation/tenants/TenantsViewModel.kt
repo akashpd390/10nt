@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 data class TenantsUiState(
     val isLoading: Boolean = false,
-    val isRefreshing: Boolean = false,
+    val isPullRefreshing: Boolean = false,
     val tenants: List<TenantDto> = emptyList(),
     val availableRooms: List<RoomDto> = emptyList(),
     val showAddDialog: Boolean = false,
@@ -30,6 +30,7 @@ data class TenantsUiState(
 
 sealed interface TenantsEvent {
     data object Refresh : TenantsEvent
+    data object PullRefresh : TenantsEvent
     data object ShowAddDialog : TenantsEvent
     data object DismissAddDialog : TenantsEvent
     data class CreateTenant(
@@ -84,7 +85,8 @@ class TenantsViewModel(
 
     fun onEvent(event: TenantsEvent) {
         when (event) {
-            is TenantsEvent.Refresh -> loadData(isSilent = false)
+            is TenantsEvent.Refresh -> loadData(isSilent = false, isPullRefresh = false)
+            is TenantsEvent.PullRefresh -> loadData(isSilent = false, isPullRefresh = true)
             is TenantsEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             is TenantsEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is TenantsEvent.CreateTenant -> createTenant(event)
@@ -99,11 +101,13 @@ class TenantsViewModel(
         }
     }
 
-    fun loadData(isSilent: Boolean = false) {
+    fun loadData(isSilent: Boolean = false, isPullRefresh: Boolean = false) {
         viewModelScope.launch {
             if (!isSilent) {
-                if (_uiState.value.tenants.isNotEmpty()) {
-                    _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+                if (isPullRefresh) {
+                    _uiState.update { it.copy(isPullRefreshing = true, errorMessage = null) }
+                } else if (_uiState.value.tenants.isNotEmpty()) {
+                    _uiState.update { it.copy(errorMessage = null) }
                 } else {
                     _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 }
@@ -119,7 +123,7 @@ class TenantsViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        isRefreshing = false,
+                        isPullRefreshing = false,
                         tenants = tenantsList,
                         availableRooms = vacantRooms,
                         errorMessage = null
@@ -129,7 +133,7 @@ class TenantsViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        isRefreshing = false,
+                        isPullRefreshing = false,
                         errorMessage = e.localizedMessage ?: "Network error"
                     )
                 }
@@ -156,7 +160,7 @@ class TenantsViewModel(
                     _uiState.update { it.copy(successMessage = "Tenant ${event.name} registered successfully") }
                     DataSyncBus.emitChange(SyncTopic.ROOMS)
                     DataSyncBus.emitChange(SyncTopic.DASHBOARD)
-                    loadData(isSilent = false)
+                    loadData(isSilent = true)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -184,7 +188,7 @@ class TenantsViewModel(
                     _uiState.update { it.copy(successMessage = "Tenant updated successfully") }
                     DataSyncBus.emitChange(SyncTopic.ROOMS)
                     DataSyncBus.emitChange(SyncTopic.DASHBOARD)
-                    loadData(isSilent = false)
+                    loadData(isSilent = true)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
@@ -205,7 +209,7 @@ class TenantsViewModel(
                     _uiState.update { it.copy(successMessage = "Tenant ${tenant.name} removed successfully") }
                     DataSyncBus.emitChange(SyncTopic.ROOMS)
                     DataSyncBus.emitChange(SyncTopic.DASHBOARD)
-                    loadData(isSilent = false)
+                    loadData(isSilent = true)
                 } else {
                     val errMsg = parseApiError(response)
                     _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
