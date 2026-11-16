@@ -62,14 +62,15 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/gradle/libs.versions.toml`: Version catalog with Koin 4.0, Compose 2025, Retrofit 2.11, OkHttp, and Security Crypto.
 - `android/app/build.gradle.kts`: App module build configuration with `buildConfigField("BASE_URL", ...)`.
 - `android/app/src/main/AndroidManifest.xml`: Manifest with Internet, Foreground Service (dataSync), and commented direct SEND_SMS permission.
-- `android/app/src/main/res/values/strings.xml`: User-facing strings (zero raw string rule).
+- `android/app/src/main/res/values/strings.xml`: User-facing strings (zero raw string rule) including Emerald & Parchment dialog labels and validation.
 - `android/app/src/main/res/values/themes.xml`: XML base theme.
 - `android/app/src/main/java/com/tenants/app/presentation/theme/Color.kt`: Emerald & Parchment palette matching DESIGN.md.
 - `android/app/src/main/java/com/tenants/app/presentation/theme/Type.kt`: Roboto Flex typography scales.
 - `android/app/src/main/java/com/tenants/app/presentation/theme/Theme.kt`: Jetpack Compose Material 3 Theme wrapper.
 - `android/app/src/main/java/com/tenants/app/data/local/TokenManager.kt`: EncryptedSharedPreferences for AES-256 JWT persistence.
-- `android/app/src/main/java/com/tenants/app/data/remote/model/ApiModels.kt`: DTOs for Auth, Dashboard, Rooms, Tenants, and Payments.
-- `android/app/src/main/java/com/tenants/app/data/remote/TenantsApiService.kt`: Retrofit client definition.
+- `android/app/src/main/java/com/tenants/app/data/remote/model/ApiModels.kt`: DTOs for Auth, Dashboard, Rooms, Tenants, Payments, and strongly typed requests (`CreateRoomRequest`, `CreateTenantRequest`, `parseApiError`).
+- `android/app/src/main/java/com/tenants/app/data/remote/TenantsApiService.kt`: Retrofit client definition using typed DTO requests.
+- `android/app/src/main/java/com/tenants/app/data/remote/TokenAuthenticator.kt`: Silent JWT token rotation with 60s timeout for Render cold-starts.
 - `android/app/src/main/java/com/tenants/app/service/ServerWakeupForegroundService.kt`: Render sleep recovery foreground service with smart lifecycle notification suppression.
 - `android/app/src/main/java/com/tenants/app/utils/SmsSender.kt`: Dual-mode SMS abstraction (Interactive Intent default vs commented Direct SIM).
 - `android/app/src/main/java/com/tenants/app/di/AppModule.kt`: Koin DI module with cold-start network timeout interceptor.
@@ -78,13 +79,13 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/auth/AuthViewModel.kt`: Manages landlord login state, email/password validation, and token persistence in TokenManager.
 - `android/app/src/main/java/com/tenants/app/presentation/auth/LoginScreen.kt`: Jetpack Compose UI for landlord sign in with show/hide password toggle and standalone `@Preview`.
 - `android/app/src/test/java/com/tenants/app/presentation/auth/AuthViewModelTest.kt`: Unit test suite testing login success, token persistence, error handling, and logout.
-- `android/app/src/main/java/com/tenants/app/presentation/components/ConfirmationDialog.kt`: Reusable Material 3 confirmation dialog with preview.
+- `android/app/src/main/java/com/tenants/app/presentation/components/ConfirmationDialog.kt`: Reusable Material 3 confirmation dialog styled in Emerald & Parchment tokens with preview.
 - `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardViewModel.kt`: Property metrics state management.
 - `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardScreen.kt`: Jetpack Compose UI for occupancy, finances, sorted unpaid list, recent transactions with `@Preview`.
-- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsViewModel.kt`: Rooms state management with occupancy validation.
-- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsScreen.kt`: Rooms listing, creation dialog, and deletion safeguard with `@Preview`.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management and room allocation.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, opening balance setup, item click navigation, and arrears deletion protection with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsViewModel.kt`: Rooms state management with typed requests, error/success feedback, and occupancy validation.
+- `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsScreen.kt`: Rooms listing, Emerald & Parchment Add/Edit dialogs with input validation, snackbar feedback, and `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management with typed requests, error/success feedback, and room allocation.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, Emerald & Parchment Add/Edit dialogs with room selector card, snackbar feedback, and `@Preview`.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsViewModel.kt`: Tenant profile details, live balance inspection, and invoice PDF download state management.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsScreen.kt`: Jetpack Compose UI for tenant details, signed balance chip, and 1-tap "Download / Share PDF Invoice" button with `@Preview`.
 - `android/app/src/main/java/com/tenants/app/utils/PdfDownloadHelper.kt`: FileProvider caching and Android share/view intent launcher for PDF invoice statements.

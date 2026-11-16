@@ -20,10 +20,10 @@ interface TenantsApiService {
     suspend fun getRooms(): Response<RoomsListResponse>
 
     @POST("api/rooms")
-    suspend fun createRoom(@Body room: Map<String, Any>): Response<ResponseBody>
+    suspend fun createRoom(@Body request: CreateRoomRequest): Response<ResponseBody>
 
     @PUT("api/rooms/{id}")
-    suspend fun updateRoom(@Path("id") id: String, @Body room: Map<String, Any>): Response<ResponseBody>
+    suspend fun updateRoom(@Path("id") id: String, @Body request: UpdateRoomRequest): Response<ResponseBody>
 
     @DELETE("api/rooms/{id}")
     suspend fun deleteRoom(@Path("id") id: String): Response<ResponseBody>
@@ -32,10 +32,10 @@ interface TenantsApiService {
     suspend fun getTenants(): Response<TenantsListResponse>
 
     @POST("api/tenants")
-    suspend fun createTenant(@Body tenant: Map<String, Any>): Response<ResponseBody>
+    suspend fun createTenant(@Body request: CreateTenantRequest): Response<ResponseBody>
 
     @PUT("api/tenants/{id}")
-    suspend fun updateTenant(@Path("id") id: String, @Body tenant: Map<String, Any>): Response<ResponseBody>
+    suspend fun updateTenant(@Path("id") id: String, @Body request: UpdateTenantRequest): Response<ResponseBody>
 
     @DELETE("api/tenants/{id}")
     suspend fun deleteTenant(@Path("id") id: String): Response<ResponseBody>

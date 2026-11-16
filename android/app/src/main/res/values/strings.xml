@@ -29,14 +29,20 @@
 
     <!-- Rooms -->
     <string name="add_room">Add Room</string>
+    <string name="edit_room">Edit Room</string>
     <string name="room_no_hint">Room Number (e.g. 101)</string>
     <string name="floor_hint">Floor</string>
     <string name="base_price_hint">Base Price (₹)</string>
+    <string name="room_description_hint">Description (Optional)</string>
     <string name="occupied_badge">Occupied</string>
     <string name="vacant_badge">Available</string>
+    <string name="room_no_required">Room number cannot be empty</string>
+    <string name="base_price_invalid">Enter a valid positive price</string>
+    <string name="edit_room_title">Edit Room %1$s</string>
 
     <!-- Tenants -->
     <string name="add_tenant">Add Tenant</string>
+    <string name="edit_tenant">Edit Tenant</string>
     <string name="tenant_name_hint">Full Name</string>
     <string name="phone_hint">Mobile Number</string>
     <string name="members_count_hint">Number of family members</string>
@@ -44,6 +50,16 @@
     <string name="electricity_rate_hint">Electricity Rate per Unit (₹)</string>
     <string name="meter_reading_hint">Current Meter Reading</string>
     <string name="opening_balance_hint">Advance (+) or Arrears (-)</string>
+    <string name="select_room_label">Assigned Room</string>
+    <string name="no_vacant_rooms">No vacant rooms available. Please add a room first.</string>
+    <string name="tenant_name_required">Tenant name is required</string>
+    <string name="phone_invalid">10-digit mobile number required</string>
+    <string name="room_selection_required">Please select a room to assign</string>
+    <string name="rent_invalid">Agreed rent must be positive</string>
+    <string name="edit_tenant_title">Edit %1$s</string>
+    <string name="active_status_label">Tenant Active Status</string>
+    <string name="active_tenant_badge">Active</string>
+    <string name="inactive_tenant_badge">Inactive / Vacated</string>
 
     <!-- Payments -->
     <string name="record_payment_title">Record Manual Payment</string>
@@ -67,6 +83,9 @@
     <!-- Dialogs -->
     <string name="confirm_delete_title">Confirm Deletion</string>
     <string name="confirm_delete_message">Are you sure you want to delete this record? This action cannot be undone.</string>
+    <string name="delete_room_warning">Are you sure you want to delete Room %1$s? This cannot be undone.</string>
+    <string name="delete_tenant_warning">Are you sure you want to remove %1$s? Assigned room will be released if currently occupied.</string>
     <string name="confirm_button">Confirm</string>
     <string name="cancel_button">Cancel</string>
+    <string name="delete_button">Delete</string>
 </resources>

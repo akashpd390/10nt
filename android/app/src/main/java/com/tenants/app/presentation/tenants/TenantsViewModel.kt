@@ -3,8 +3,11 @@ package com.tenants.app.presentation.tenants
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tenants.app.data.remote.TenantsApiService
+import com.tenants.app.data.remote.model.CreateTenantRequest
 import com.tenants.app.data.remote.model.RoomDto
 import com.tenants.app.data.remote.model.TenantDto
+import com.tenants.app.data.remote.model.UpdateTenantRequest
+import com.tenants.app.data.remote.model.parseApiError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +21,8 @@ data class TenantsUiState(
     val showAddDialog: Boolean = false,
     val tenantToEdit: TenantDto? = null,
     val tenantToDelete: TenantDto? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 )
 
 sealed interface TenantsEvent {
@@ -42,13 +46,15 @@ sealed interface TenantsEvent {
         val phone: String,
         val membersCount: Int,
         val rent: Double,
-        val electricityRate: Double
+        val electricityRate: Double,
+        val isActive: Boolean? = null
     ) : TenantsEvent
     data object DismissEditDialog : TenantsEvent
     data class RequestDeleteTenant(val tenant: TenantDto) : TenantsEvent
     data object ConfirmDeleteTenant : TenantsEvent
     data object DismissDeleteDialog : TenantsEvent
     data object ClearError : TenantsEvent
+    data object ClearSuccess : TenantsEvent
 }
 
 class TenantsViewModel(
@@ -75,6 +81,7 @@ class TenantsViewModel(
             is TenantsEvent.ConfirmDeleteTenant -> deleteTenant()
             is TenantsEvent.DismissDeleteDialog -> _uiState.update { it.copy(tenantToDelete = null) }
             is TenantsEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            is TenantsEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null) }
         }
     }
 
@@ -106,21 +113,23 @@ class TenantsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, showAddDialog = false) }
             try {
-                val payload = mapOf(
-                    "name" to event.name,
-                    "phone" to event.phone,
-                    "familyMembersCount" to event.membersCount,
-                    "roomId" to event.roomId,
-                    "allottedPrice" to event.rent,
-                    "electricityRatePerUnit" to event.electricityRate,
-                    "initialMeterReading" to event.meterReading,
-                    "initialAdvanceOrBalance" to event.openingBalance
+                val request = CreateTenantRequest(
+                    name = event.name,
+                    phone = event.phone,
+                    familyMembersCount = event.membersCount,
+                    roomId = event.roomId,
+                    allottedPrice = event.rent,
+                    electricityRatePerUnit = event.electricityRate,
+                    initialMeterReading = event.meterReading,
+                    initialAdvanceOrBalance = event.openingBalance
                 )
-                val response = apiService.createTenant(payload)
+                val response = apiService.createTenant(request)
                 if (response.isSuccessful) {
+                    _uiState.update { it.copy(successMessage = "Tenant ${event.name} registered successfully") }
                     loadData()
                 } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to register tenant") }
+                    val errMsg = parseApiError(response)
+                    _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Creation failed") }
@@ -132,18 +141,21 @@ class TenantsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, tenantToEdit = null) }
             try {
-                val payload = mapOf(
-                    "name" to event.name,
-                    "phone" to event.phone,
-                    "familyMembersCount" to event.membersCount,
-                    "allottedPrice" to event.rent,
-                    "electricityRatePerUnit" to event.electricityRate
+                val request = UpdateTenantRequest(
+                    name = event.name,
+                    phone = event.phone,
+                    familyMembersCount = event.membersCount,
+                    allottedPrice = event.rent,
+                    electricityRatePerUnit = event.electricityRate,
+                    isActive = event.isActive
                 )
-                val response = apiService.updateTenant(event.id, payload)
+                val response = apiService.updateTenant(event.id, request)
                 if (response.isSuccessful) {
+                    _uiState.update { it.copy(successMessage = "Tenant updated successfully") }
                     loadData()
                 } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to update tenant details") }
+                    val errMsg = parseApiError(response)
+                    _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Update failed") }
@@ -158,9 +170,11 @@ class TenantsViewModel(
             try {
                 val response = apiService.deleteTenant(tenant.id)
                 if (response.isSuccessful) {
+                    _uiState.update { it.copy(successMessage = "Tenant ${tenant.name} removed successfully") }
                     loadData()
                 } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Cannot delete: Tenant has pending balance dues") }
+                    val errMsg = parseApiError(response)
+                    _uiState.update { it.copy(isLoading = false, errorMessage = errMsg) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Delete failed") }

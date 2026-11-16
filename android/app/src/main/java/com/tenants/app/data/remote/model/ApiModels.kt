@@ -76,6 +76,19 @@ data class RoomsListResponse(
     @SerializedName("rooms") val rooms: List<RoomDto>
 )
 
+data class CreateRoomRequest(
+    @SerializedName("roomNo") val roomNo: String,
+    @SerializedName("floor") val floor: Int,
+    @SerializedName("basePrice") val basePrice: Double,
+    @SerializedName("description") val description: String? = null
+)
+
+data class UpdateRoomRequest(
+    @SerializedName("floor") val floor: Int,
+    @SerializedName("basePrice") val basePrice: Double,
+    @SerializedName("description") val description: String? = null
+)
+
 // Tenants DTOs
 data class TenantDto(
     @SerializedName("id") val id: String,
@@ -94,6 +107,48 @@ data class TenantDto(
 data class TenantsListResponse(
     @SerializedName("tenants") val tenants: List<TenantDto>
 )
+
+data class CreateTenantRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("phone") val phone: String,
+    @SerializedName("familyMembersCount") val familyMembersCount: Int,
+    @SerializedName("roomId") val roomId: String,
+    @SerializedName("allottedPrice") val allottedPrice: Double,
+    @SerializedName("electricityRatePerUnit") val electricityRatePerUnit: Double,
+    @SerializedName("initialMeterReading") val initialMeterReading: Double,
+    @SerializedName("initialAdvanceOrBalance") val initialAdvanceOrBalance: Double,
+    @SerializedName("adhaarCardUrl") val adhaarCardUrl: String? = null,
+    @SerializedName("profilePicUrl") val profilePicUrl: String? = null
+)
+
+data class UpdateTenantRequest(
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("familyMembersCount") val familyMembersCount: Int? = null,
+    @SerializedName("allottedPrice") val allottedPrice: Double? = null,
+    @SerializedName("electricityRatePerUnit") val electricityRatePerUnit: Double? = null,
+    @SerializedName("isActive") val isActive: Boolean? = null
+)
+
+/**
+ * Parses JSON error responses returned by the backend (e.g. {"error": "..."})
+ * Fallback to HTTP status code message if parsing fails.
+ */
+fun parseApiError(response: retrofit2.Response<*>): String {
+    try {
+        val errorString = response.errorBody()?.string()
+        if (!errorString.isNullOrBlank()) {
+            val json = com.google.gson.JsonParser.parseString(errorString).asJsonObject
+            if (json.has("error") && !json.get("error").isJsonNull) {
+                return json.get("error").asString
+            }
+            if (json.has("message") && !json.get("message").isJsonNull) {
+                return json.get("message").asString
+            }
+        }
+    } catch (_: Exception) {}
+    return "Request failed with status ${response.code()}"
+}
 
 // Payments DTOs
 data class CreatePaymentRequest(

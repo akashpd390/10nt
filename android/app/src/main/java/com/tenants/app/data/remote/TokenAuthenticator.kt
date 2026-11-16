@@ -49,7 +49,10 @@ class TokenAuthenticator(
             .post(refreshRequestBody)
             .build()
 
-        val client = OkHttpClient.Builder().build()
+        val client = OkHttpClient.Builder()
+            .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
         try {
             val refreshResponse = client.newCall(refreshRequest).execute()
             if (refreshResponse.isSuccessful && refreshResponse.body != null) {
