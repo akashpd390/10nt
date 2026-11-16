@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.*
@@ -49,13 +50,15 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = koinViewModel(),
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    onNavigateToTransactions: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DashboardContent(
         state = state,
         onEvent = viewModel::onEvent,
-        onLogoutClick = onLogoutClick
+        onLogoutClick = onLogoutClick,
+        onNavigateToTransactions = onNavigateToTransactions
     )
 }
 
@@ -67,7 +70,8 @@ fun DashboardScreen(
 fun DashboardContent(
     state: DashboardUiState,
     onEvent: (DashboardEvent) -> Unit,
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    onNavigateToTransactions: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val refreshRotation = remember { Animatable(0f) }
@@ -329,14 +333,36 @@ fun DashboardContent(
                             }
                         }
 
-                        // Recent Payments
+                        // Recent Payments Header with View All
                         item {
-                            Text(
-                                text = stringResource(R.string.recent_payments_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Primary
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.recent_payments_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Primary
+                                )
+                                TextButton(
+                                    onClick = onNavigateToTransactions,
+                                    colors = ButtonDefaults.textButtonColors(contentColor = Primary)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.view_all_transactions),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                         }
 
                         items(data.recentTransactions) { tx ->

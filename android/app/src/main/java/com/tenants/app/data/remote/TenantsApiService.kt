@@ -43,6 +43,9 @@ interface TenantsApiService {
     @POST("api/payments")
     suspend fun createPayment(@Body request: CreatePaymentRequest): Response<CreatePaymentResponse>
 
+    @GET("api/payments")
+    suspend fun getPayments(): Response<PaymentsListResponse>
+
     @Streaming
     @GET("api/export/tenants/{id}/pdf")
     suspend fun downloadTenantPdf(@Path("id") id: String): Response<ResponseBody>

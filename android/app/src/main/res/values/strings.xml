@@ -80,6 +80,14 @@
     <string name="sms_receipt_prompt">Send SMS Confirmation to Tenant?</string>
     <string name="send_sms_button">Send SMS via SIM</string>
     <string name="skip_button">Skip</string>
+    <string name="view_all_transactions">View All</string>
+    <string name="all_transactions_title">Payment History</string>
+    <string name="search_transactions_hint">Search by tenant, room, or notes…</string>
+    <string name="filter_all">All</string>
+    <string name="no_transactions_found">No payment records found</string>
+    <string name="no_transactions_found_desc">Try adjusting your search query or filter mode.</string>
+    <string name="transactions_count_summary">%1$d payments • Total: ₹%2$s</string>
+    <string name="balance_after_label">Balance: ₹%1$s</string>
 
     <!-- Cold start notification -->
     <string name="server_connecting_title">Connecting to Server</string>

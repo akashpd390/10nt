@@ -25,6 +25,7 @@ import com.tenants.app.presentation.payments.PaymentScreen
 import com.tenants.app.presentation.rooms.RoomsScreen
 import com.tenants.app.presentation.tenants.TenantDetailsScreen
 import com.tenants.app.presentation.tenants.TenantsScreen
+import com.tenants.app.presentation.transactions.TransactionsScreen
 import com.tenants.app.presentation.theme.Primary
 import com.tenants.app.presentation.theme.Surface
 import com.tenants.app.presentation.theme.TenantsTheme
@@ -36,6 +37,7 @@ sealed class Screen(val route: String, val titleRes: Int, val icon: androidx.com
     data object Rooms : Screen("rooms", R.string.nav_rooms, Icons.Default.MeetingRoom)
     data object Tenants : Screen("tenants", R.string.nav_tenants, Icons.Default.People)
     data object Payments : Screen("payments", R.string.nav_payments, Icons.Default.Payment)
+    data object Transactions : Screen("transactions", R.string.all_transactions_title, Icons.Default.Payment)
     data object TenantDetails : Screen("tenant_details/{tenantId}", R.string.nav_tenants, Icons.Default.People) {
         fun createRoute(tenantId: String) = "tenant_details/$tenantId"
     }
@@ -62,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route && currentRoute?.startsWith("tenant_details") != true
+                val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route && currentRoute?.startsWith("tenant_details") != true && currentRoute != Screen.Transactions.route
 
                 // Listen for Forced Logout event (e.g. 7-day token expired)
                 val context = androidx.compose.ui.platform.LocalContext.current
@@ -124,6 +126,9 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.Login.route) {
                                         popUpTo(0) { inclusive = true }
                                     }
+                                },
+                                onNavigateToTransactions = {
+                                    navController.navigate(Screen.Transactions.route)
                                 }
                             )
                         }
@@ -136,6 +141,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.Payments.route) { PaymentScreen() }
+                        composable(Screen.Transactions.route) {
+                            TransactionsScreen(
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
                         composable(Screen.TenantDetails.route) { backStackEntry ->
                             val tenantId = backStackEntry.arguments?.getString("tenantId") ?: ""
                             TenantDetailsScreen(

@@ -173,3 +173,20 @@ data class CreatePaymentResponse(
     @SerializedName("message") val message: String,
     @SerializedName("summary") val summary: PaymentSummaryDto
 )
+
+data class PaymentRecordDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("tenantId") val tenantId: String,
+    @SerializedName("amountPaid") val amountPaid: String,
+    @SerializedName("paymentMode") val paymentMode: String,
+    @SerializedName("paymentDate") val paymentDate: String,
+    @SerializedName("notes") val notes: String? = null,
+    @SerializedName("balanceBefore") val balanceBefore: String? = null,
+    @SerializedName("balanceAfter") val balanceAfter: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("tenant") val tenant: TenantDto? = null
+)
+
+data class PaymentsListResponse(
+    @SerializedName("payments") val payments: List<PaymentRecordDto>
+)

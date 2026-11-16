@@ -92,4 +92,5 @@ val appModule = module {
     viewModel { com.tenants.app.presentation.tenants.TenantsViewModel(get()) }
     viewModel { com.tenants.app.presentation.tenants.TenantDetailsViewModel(get()) }
     viewModel { com.tenants.app.presentation.payments.PaymentViewModel(get()) }
+    viewModel { com.tenants.app.presentation.transactions.TransactionsViewModel(get()) }
 }

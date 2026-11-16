@@ -95,4 +95,7 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentViewModel.kt`: Payment entry state, tenant search filtering, and receipt generation.
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentScreen.kt`: Payment form, searchable tenant dropdown, quick stats, and post-payment SMS receipt prompt with `@Preview`.
 - `android/app/src/test/java/com/tenants/app/presentation/payments/PaymentViewModelTest.kt`: Unit tests for tenant selection auto-population and search filtering.
+- `android/app/src/main/java/com/tenants/app/presentation/transactions/TransactionsViewModel.kt`: Payment history state management with mode filters, search query, pull-to-refresh, and reactive DataSyncBus sync.
+- `android/app/src/main/java/com/tenants/app/presentation/transactions/TransactionsScreen.kt`: Jetpack Compose UI for all transaction records, filter chips, search bar, summary stats, and stand-alone `@Preview`.
+- `android/app/src/test/java/com/tenants/app/presentation/transactions/TransactionsViewModelTest.kt`: Unit tests for initial payment load, payment mode filtering, and search matching.
 - `android/app/src/test/java/com/tenants/app/service/ServerWakeupServiceTest.kt`: Non-UI unit tests for lifecycle state detection and SMS formatting.
