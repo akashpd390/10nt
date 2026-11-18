@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 data class TenantsUiState(
     val isLoading: Boolean = false,
@@ -41,7 +44,9 @@ sealed interface TenantsEvent {
         val rent: Double,
         val electricityRate: Double,
         val meterReading: Double,
-        val openingBalance: Double
+        val openingBalance: Double,
+        val adhaarCardUrl: String? = null,
+        val profilePicUrl: String? = null
     ) : TenantsEvent
     data class RequestEditTenant(val tenant: TenantDto) : TenantsEvent
     data class UpdateTenant(
@@ -51,6 +56,8 @@ sealed interface TenantsEvent {
         val membersCount: Int,
         val rent: Double,
         val electricityRate: Double,
+        val adhaarCardUrl: String? = null,
+        val profilePicUrl: String? = null,
         val isActive: Boolean? = null
     ) : TenantsEvent
     data object DismissEditDialog : TenantsEvent
@@ -141,6 +148,25 @@ class TenantsViewModel(
         }
     }
 
+    /**
+     * Uploads an image byte array to the server via Cloudinary storage.
+     * Returns the public URL on success or null on failure.
+     */
+    suspend fun uploadImageFile(bytes: ByteArray, mimeType: String, fileName: String): String? {
+        return try {
+            val reqBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            val part = MultipartBody.Part.createFormData("file", fileName, reqBody)
+            val response = apiService.uploadFile(part)
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!.url
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun createTenant(event: TenantsEvent.CreateTenant) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, showAddDialog = false) }
@@ -153,7 +179,9 @@ class TenantsViewModel(
                     allottedPrice = event.rent,
                     electricityRatePerUnit = event.electricityRate,
                     initialMeterReading = event.meterReading,
-                    initialAdvanceOrBalance = event.openingBalance
+                    initialAdvanceOrBalance = event.openingBalance,
+                    adhaarCardUrl = event.adhaarCardUrl,
+                    profilePicUrl = event.profilePicUrl
                 )
                 val response = apiService.createTenant(request)
                 if (response.isSuccessful) {
@@ -181,6 +209,8 @@ class TenantsViewModel(
                     familyMembersCount = event.membersCount,
                     allottedPrice = event.rent,
                     electricityRatePerUnit = event.electricityRate,
+                    adhaarCardUrl = event.adhaarCardUrl,
+                    profilePicUrl = event.profilePicUrl,
                     isActive = event.isActive
                 )
                 val response = apiService.updateTenant(event.id, request)

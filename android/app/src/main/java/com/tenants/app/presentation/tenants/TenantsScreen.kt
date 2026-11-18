@@ -1,5 +1,8 @@
 package com.tenants.app.presentation.tenants
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,17 +21,22 @@ import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.tenants.app.R
 import com.tenants.app.data.remote.model.RoomDto
 import com.tenants.app.data.remote.model.TenantDto
 import com.tenants.app.presentation.components.ConfirmationDialog
 import com.tenants.app.presentation.theme.*
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -43,7 +51,8 @@ fun TenantsScreen(
     TenantsContent(
         state = state,
         onEvent = viewModel::onEvent,
-        onTenantClick = onTenantClick
+        onTenantClick = onTenantClick,
+        onUploadImage = { bytes, mime, name -> viewModel.uploadImageFile(bytes, mime, name) }
     )
 }
 
@@ -55,7 +64,8 @@ fun TenantsScreen(
 fun TenantsContent(
     state: TenantsUiState,
     onEvent: (TenantsEvent) -> Unit,
-    onTenantClick: (String) -> Unit = {}
+    onTenantClick: (String) -> Unit = {},
+    onUploadImage: (suspend (ByteArray, String, String) -> String?)? = null
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -171,6 +181,17 @@ fun TenantsContent(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.weight(1f)
                                 ) {
+                                if (!tenant.profilePicUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = tenant.profilePicUrl,
+                                        contentDescription = tenant.name,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .border(1.dp, Primary.copy(alpha = 0.5f), CircleShape)
+                                    )
+                                } else {
                                     Box(
                                         modifier = Modifier
                                             .size(44.dp)
@@ -187,6 +208,7 @@ fun TenantsContent(
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
+                                }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(
@@ -239,6 +261,7 @@ fun TenantsContent(
             AddTenantDialog(
                 availableRooms = state.availableRooms,
                 onDismiss = { onEvent(TenantsEvent.DismissAddDialog) },
+                onUploadImage = onUploadImage,
                 onConfirm = { event -> onEvent(event) }
             )
         }
@@ -248,8 +271,9 @@ fun TenantsContent(
             EditTenantDialog(
                 tenant = tenant,
                 onDismiss = { onEvent(TenantsEvent.DismissEditDialog) },
-                onConfirm = { id, name, phone, members, rent, electricity, isActive ->
-                    onEvent(TenantsEvent.UpdateTenant(id, name, phone, members, rent, electricity, isActive))
+                onUploadImage = onUploadImage,
+                onConfirm = { id, name, phone, members, rent, electricity, adhaarUrl, profileUrl, isActive ->
+                    onEvent(TenantsEvent.UpdateTenant(id, name, phone, members, rent, electricity, adhaarUrl, profileUrl, isActive))
                 }
             )
         }
@@ -274,8 +298,12 @@ fun TenantsContent(
 private fun AddTenantDialog(
     availableRooms: List<RoomDto>,
     onDismiss: () -> Unit,
+    onUploadImage: (suspend (ByteArray, String, String) -> String?)? = null,
     onConfirm: (TenantsEvent.CreateTenant) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var membersCount by remember { mutableStateOf("1") }
@@ -284,7 +312,43 @@ private fun AddTenantDialog(
     var electricityRate by remember { mutableStateOf("8.00") }
     var meterReading by remember { mutableStateOf("0.00") }
     var openingBalance by remember { mutableStateOf("0.00") }
+    var profilePicUrl by remember { mutableStateOf<String?>(null) }
+    var adhaarCardUrl by remember { mutableStateOf<String?>(null) }
+    var isUploadingProfile by remember { mutableStateOf(false) }
+    var isUploadingAdhaar by remember { mutableStateOf(false) }
     var hasAttemptedSubmit by remember { mutableStateOf(false) }
+
+    val profilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null && onUploadImage != null) {
+            scope.launch {
+                isUploadingProfile = true
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (bytes != null) {
+                    profilePicUrl = onUploadImage(bytes, mime, "profile_${System.currentTimeMillis()}.jpg")
+                }
+                isUploadingProfile = false
+            }
+        }
+    }
+
+    val adhaarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null && onUploadImage != null) {
+            scope.launch {
+                isUploadingAdhaar = true
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (bytes != null) {
+                    adhaarCardUrl = onUploadImage(bytes, mime, "adhaar_${System.currentTimeMillis()}.jpg")
+                }
+                isUploadingAdhaar = false
+            }
+        }
+    }
 
     val isNameValid = name.trim().isNotBlank()
     val isPhoneValid = phone.trim().length == 10
@@ -560,6 +624,140 @@ private fun AddTenantDialog(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Optional Photo & Document Attachments
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Profile Photo Attachment
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (isUploadingProfile) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SurfaceContainerLow, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Primary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.uploading_media), style = MaterialTheme.typography.labelSmall, color = Outline)
+                            }
+                        } else if (!profilePicUrl.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SecondaryContainer, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                AsyncImage(
+                                    model = profilePicUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                )
+                                IconButton(
+                                    onClick = { profilePicUrl = null },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.remove_attachment),
+                                        tint = Error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    profilePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.pick_photo_action), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            }
+                        }
+                    }
+
+                    // Aadhaar Attachment
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (isUploadingAdhaar) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SurfaceContainerLow, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Primary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.uploading_media), style = MaterialTheme.typography.labelSmall, color = Outline)
+                            }
+                        } else if (!adhaarCardUrl.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SecondaryContainer, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                AsyncImage(
+                                    model = adhaarCardUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                                IconButton(
+                                    onClick = { adhaarCardUrl = null },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.remove_attachment),
+                                        tint = Error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    adhaarPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Badge, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.pick_adhaar_action), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -576,7 +774,9 @@ private fun AddTenantDialog(
                                 rent = rent.toDoubleOrNull() ?: 0.0,
                                 electricityRate = electricityRate.toDoubleOrNull() ?: 8.0,
                                 meterReading = meterReading.toDoubleOrNull() ?: 0.0,
-                                openingBalance = openingBalance.toDoubleOrNull() ?: 0.0
+                                openingBalance = openingBalance.toDoubleOrNull() ?: 0.0,
+                                adhaarCardUrl = adhaarCardUrl,
+                                profilePicUrl = profilePicUrl
                             )
                         )
                     }
@@ -623,15 +823,55 @@ private fun AddTenantDialog(
 private fun EditTenantDialog(
     tenant: TenantDto,
     onDismiss: () -> Unit,
-    onConfirm: (id: String, name: String, phone: String, members: Int, rent: Double, electricity: Double, isActive: Boolean) -> Unit
+    onUploadImage: (suspend (ByteArray, String, String) -> String?)? = null,
+    onConfirm: (id: String, name: String, phone: String, members: Int, rent: Double, electricity: Double, adhaarUrl: String?, profileUrl: String?, isActive: Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var editName by remember(tenant) { mutableStateOf(tenant.name) }
     var editPhone by remember(tenant) { mutableStateOf(tenant.phone) }
     var editMembers by remember(tenant) { mutableStateOf(tenant.familyMembersCount.toString()) }
     var editRent by remember(tenant) { mutableStateOf(tenant.allottedPrice) }
     var editElectricityRate by remember(tenant) { mutableStateOf(tenant.electricityRatePerUnit) }
+    var profilePicUrl by remember(tenant) { mutableStateOf(tenant.profilePicUrl) }
+    var adhaarCardUrl by remember(tenant) { mutableStateOf(tenant.adhaarCardUrl) }
+    var isUploadingProfile by remember { mutableStateOf(false) }
+    var isUploadingAdhaar by remember { mutableStateOf(false) }
     var isActive by remember(tenant) { mutableStateOf(tenant.isActive) }
     var hasAttemptedSubmit by remember { mutableStateOf(false) }
+
+    val profilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null && onUploadImage != null) {
+            scope.launch {
+                isUploadingProfile = true
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (bytes != null) {
+                    profilePicUrl = onUploadImage(bytes, mime, "profile_${System.currentTimeMillis()}.jpg")
+                }
+                isUploadingProfile = false
+            }
+        }
+    }
+
+    val adhaarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null && onUploadImage != null) {
+            scope.launch {
+                isUploadingAdhaar = true
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (bytes != null) {
+                    adhaarCardUrl = onUploadImage(bytes, mime, "adhaar_${System.currentTimeMillis()}.jpg")
+                }
+                isUploadingAdhaar = false
+            }
+        }
+    }
 
     val isNameValid = editName.trim().isNotBlank()
     val isPhoneValid = editPhone.trim().length == 10
@@ -774,6 +1014,140 @@ private fun EditTenantDialog(
                         )
                     }
                 }
+
+                // Optional Photo & Document Attachments
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Profile Photo Attachment
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (isUploadingProfile) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SurfaceContainerLow, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Primary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.uploading_media), style = MaterialTheme.typography.labelSmall, color = Outline)
+                            }
+                        } else if (!profilePicUrl.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SecondaryContainer, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                AsyncImage(
+                                    model = profilePicUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                )
+                                IconButton(
+                                    onClick = { profilePicUrl = null },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.remove_attachment),
+                                        tint = Error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    profilePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.pick_photo_action), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            }
+                        }
+                    }
+
+                    // Aadhaar Attachment
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (isUploadingAdhaar) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SurfaceContainerLow, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Primary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(stringResource(R.string.uploading_media), style = MaterialTheme.typography.labelSmall, color = Outline)
+                            }
+                        } else if (!adhaarCardUrl.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(SecondaryContainer, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                AsyncImage(
+                                    model = adhaarCardUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                                IconButton(
+                                    onClick = { adhaarCardUrl = null },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.remove_attachment),
+                                        tint = Error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    adhaarPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Badge, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.pick_adhaar_action), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -784,7 +1158,7 @@ private fun EditTenantDialog(
                         val membersInt = editMembers.toIntOrNull() ?: tenant.familyMembersCount
                         val rentDouble = editRent.toDoubleOrNull() ?: tenant.allottedPrice.toDoubleOrNull() ?: 0.0
                         val electricityDouble = editElectricityRate.toDoubleOrNull() ?: tenant.electricityRatePerUnit.toDoubleOrNull() ?: 8.0
-                        onConfirm(tenant.id, editName.trim(), editPhone.trim(), membersInt, rentDouble, electricityDouble, isActive)
+                        onConfirm(tenant.id, editName.trim(), editPhone.trim(), membersInt, rentDouble, electricityDouble, adhaarCardUrl, profilePicUrl, isActive)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(

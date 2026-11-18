@@ -90,6 +90,17 @@ data class UpdateRoomRequest(
 )
 
 // Tenants DTOs
+data class LedgerEntryDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("tenantId") val tenantId: String,
+    @SerializedName("type") val type: String, // BILL_CHARGE, PAYMENT_RECEIVED, MANUAL_ADJUSTMENT
+    @SerializedName("amount") val amount: String,
+    @SerializedName("runningBalance") val runningBalance: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("referenceId") val referenceId: String? = null,
+    @SerializedName("createdAt") val createdAt: String
+)
+
 data class TenantDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
@@ -101,11 +112,24 @@ data class TenantDto(
     @SerializedName("lastMeterReading") val lastMeterReading: String,
     @SerializedName("currentBalance") val currentBalance: String,
     @SerializedName("isActive") val isActive: Boolean,
-    @SerializedName("room") val room: RoomDto?
+    @SerializedName("room") val room: RoomDto?,
+    @SerializedName("adhaarCardUrl") val adhaarCardUrl: String? = null,
+    @SerializedName("profilePicUrl") val profilePicUrl: String? = null,
+    @SerializedName("joinedDate") val joinedDate: String? = null,
+    @SerializedName("ledgerEntries") val ledgerEntries: List<LedgerEntryDto>? = null
 )
 
 data class TenantsListResponse(
     @SerializedName("tenants") val tenants: List<TenantDto>
+)
+
+data class TenantDetailResponse(
+    @SerializedName("tenant") val tenant: TenantDto
+)
+
+data class UploadResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("url") val url: String
 )
 
 data class CreateTenantRequest(
@@ -127,6 +151,8 @@ data class UpdateTenantRequest(
     @SerializedName("familyMembersCount") val familyMembersCount: Int? = null,
     @SerializedName("allottedPrice") val allottedPrice: Double? = null,
     @SerializedName("electricityRatePerUnit") val electricityRatePerUnit: Double? = null,
+    @SerializedName("adhaarCardUrl") val adhaarCardUrl: String? = null,
+    @SerializedName("profilePicUrl") val profilePicUrl: String? = null,
     @SerializedName("isActive") val isActive: Boolean? = null
 )
 

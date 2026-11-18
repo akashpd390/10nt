@@ -3,6 +3,8 @@ package com.tenants.app.presentation.tenants
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tenants.app.data.local.DataSyncBus
+import com.tenants.app.data.local.SyncTopic
 import com.tenants.app.data.remote.TenantsApiService
 import com.tenants.app.data.remote.model.TenantDto
 import com.tenants.app.utils.PdfDownloadHelper
@@ -16,6 +18,7 @@ data class TenantDetailsUiState(
     val tenantId: String = "",
     val tenant: TenantDto? = null,
     val isLoading: Boolean = false,
+    val isPullRefreshing: Boolean = false,
     val isPdfDownloading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
@@ -23,12 +26,13 @@ data class TenantDetailsUiState(
 
 sealed interface TenantDetailsEvent {
     data class LoadDetails(val tenantId: String) : TenantDetailsEvent
+    data object PullRefresh : TenantDetailsEvent
     data class DownloadAndSharePdf(val context: Context) : TenantDetailsEvent
     data object ClearMessages : TenantDetailsEvent
 }
 
 /**
- * ViewModel for viewing detailed tenant information, billing status, and downloading PDF statements.
+ * ViewModel for viewing detailed tenant information, billing status, ledger breakdown, and downloading PDF statements.
  */
 class TenantDetailsViewModel(
     private val apiService: TenantsApiService,
@@ -38,31 +42,90 @@ class TenantDetailsViewModel(
     private val _uiState = MutableStateFlow(TenantDetailsUiState())
     val uiState: StateFlow<TenantDetailsUiState> = _uiState.asStateFlow()
 
+    init {
+        observeSyncEvents()
+    }
+
+    private fun observeSyncEvents() {
+        viewModelScope.launch {
+            DataSyncBus.syncEvents.collect { topic ->
+                if (topic == SyncTopic.TENANTS || topic == SyncTopic.PAYMENTS || topic == SyncTopic.ALL) {
+                    val currentId = _uiState.value.tenantId
+                    if (currentId.isNotBlank()) {
+                        loadTenant(currentId, isSilent = true)
+                    }
+                }
+            }
+        }
+    }
+
     fun onEvent(event: TenantDetailsEvent) {
         when (event) {
             is TenantDetailsEvent.LoadDetails -> loadTenant(event.tenantId)
+            is TenantDetailsEvent.PullRefresh -> {
+                val currentId = _uiState.value.tenantId
+                if (currentId.isNotBlank()) {
+                    loadTenant(currentId, isPullRefresh = true)
+                }
+            }
             is TenantDetailsEvent.DownloadAndSharePdf -> downloadAndShareInvoice(event.context)
             is TenantDetailsEvent.ClearMessages -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
         }
     }
 
-    private fun loadTenant(tenantId: String) {
-        _uiState.update { it.copy(tenantId = tenantId, isLoading = true, errorMessage = null) }
+    private fun loadTenant(tenantId: String, isPullRefresh: Boolean = false, isSilent: Boolean = false) {
+        _uiState.update {
+            it.copy(
+                tenantId = tenantId,
+                isLoading = !isPullRefresh && !isSilent && it.tenant == null,
+                isPullRefreshing = isPullRefresh,
+                errorMessage = null
+            )
+        }
         viewModelScope.launch {
             try {
-                val response = apiService.getTenants()
+                // Fetch full tenant profile including 10 recent ledger transactions
+                val response = apiService.getTenantById(tenantId)
                 if (response.isSuccessful && response.body() != null) {
-                    val found = response.body()!!.tenants.find { it.id == tenantId }
-                    if (found != null) {
-                        _uiState.update { it.copy(isLoading = false, tenant = found) }
-                    } else {
-                        _uiState.update { it.copy(isLoading = false, errorMessage = "Tenant record not found") }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isPullRefreshing = false,
+                            tenant = response.body()!!.tenant,
+                            errorMessage = null
+                        )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to load tenant details") }
+                    // Fallback to getTenants if single endpoint returns 404 or fails
+                    val fallbackRes = apiService.getTenants()
+                    val found = fallbackRes.body()?.tenants?.find { it.id == tenantId }
+                    if (found != null) {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isPullRefreshing = false,
+                                tenant = found,
+                                errorMessage = null
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isPullRefreshing = false,
+                                errorMessage = "Tenant record not found"
+                            )
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Network error") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isPullRefreshing = false,
+                        errorMessage = e.localizedMessage ?: "Network error"
+                    )
+                }
             }
         }
     }

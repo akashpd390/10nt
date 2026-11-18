@@ -31,6 +31,9 @@ interface TenantsApiService {
     @GET("api/tenants")
     suspend fun getTenants(): Response<TenantsListResponse>
 
+    @GET("api/tenants/{id}")
+    suspend fun getTenantById(@Path("id") id: String): Response<TenantDetailResponse>
+
     @POST("api/tenants")
     suspend fun createTenant(@Body request: CreateTenantRequest): Response<ResponseBody>
 
@@ -39,6 +42,10 @@ interface TenantsApiService {
 
     @DELETE("api/tenants/{id}")
     suspend fun deleteTenant(@Path("id") id: String): Response<ResponseBody>
+
+    @Multipart
+    @POST("api/upload")
+    suspend fun uploadFile(@Part file: okhttp3.MultipartBody.Part): Response<UploadResponse>
 
     @POST("api/payments")
     suspend fun createPayment(@Body request: CreatePaymentRequest): Response<CreatePaymentResponse>

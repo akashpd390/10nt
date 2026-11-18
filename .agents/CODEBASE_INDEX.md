@@ -85,13 +85,13 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/dashboard/DashboardScreen.kt`: Jetpack Compose UI for occupancy, finances, sorted unpaid list, recent transactions with `@Preview`.
 - `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsViewModel.kt`: Rooms state management with typed requests, error/success feedback, and occupancy validation.
 - `android/app/src/main/java/com/tenants/app/presentation/rooms/RoomsScreen.kt`: Rooms listing, Emerald & Parchment Add/Edit dialogs with input validation, snackbar feedback, and `@Preview`.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management with typed requests, error/success feedback, and room allocation.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing, Emerald & Parchment Add/Edit dialogs with room selector card, snackbar feedback, and `@Preview`.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsViewModel.kt`: Tenant profile details, live balance inspection, and invoice PDF download state management.
-- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsScreen.kt`: Jetpack Compose UI for tenant details, signed balance chip, and 1-tap "Download / Share PDF Invoice" button with `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management with typed requests, error/success feedback, room allocation, and multipart photo & Aadhaar upload support.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing with avatar thumbnails, Emerald & Parchment Add/Edit dialogs with modern Photo & Aadhaar attachment pickers, room selector, and `@Preview`.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsViewModel.kt`: Tenant profile details, `getTenantById` integration with recent 10 ledger entries, reactive DataSyncBus sync, pull-to-refresh, and PDF download state management.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsScreen.kt`: Jetpack Compose UI for tenant details, profile avatar with Coil, clickable Aadhaar/ID document preview dialog, recent ledger breakdown list (charges, payments, adjustments), and 1-tap "Download / Share PDF Invoice" button with `@Preview`.
 - `android/app/src/main/java/com/tenants/app/utils/PdfDownloadHelper.kt`: FileProvider caching and Android share/view intent launcher for PDF invoice statements.
 - `android/app/src/main/res/xml/file_paths.xml`: FileProvider cache path mapping for invoice sharing.
-- `android/app/src/test/java/com/tenants/app/presentation/tenants/TenantDetailsViewModelTest.kt`: Unit test suite testing details loading and PDF stream caching/sharing dispatch.
+- `android/app/src/test/java/com/tenants/app/presentation/tenants/TenantDetailsViewModelTest.kt`: Unit test suite testing details loading, ledger entries inspection, fallback logic, pull-to-refresh, and PDF stream caching/sharing dispatch.
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentViewModel.kt`: Payment entry state, tenant search filtering, and receipt generation.
 - `android/app/src/main/java/com/tenants/app/presentation/payments/PaymentScreen.kt`: Payment form, searchable tenant dropdown, quick stats, and post-payment SMS receipt prompt with `@Preview`.
 - `android/app/src/test/java/com/tenants/app/presentation/payments/PaymentViewModelTest.kt`: Unit tests for tenant selection auto-population and search filtering.

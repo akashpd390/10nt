@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 enum class SyncTopic {
     ROOMS,
     TENANTS,
+    PAYMENTS,
     DASHBOARD,
     ALL
 }

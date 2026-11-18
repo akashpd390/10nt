@@ -103,4 +103,28 @@
     <string name="confirm_button">Confirm</string>
     <string name="cancel_button">Cancel</string>
     <string name="delete_button">Delete</string>
+
+    <!-- Tenant Details & Ledger -->
+    <string name="tenant_profile_title">Tenant Profile</string>
+    <string name="tenancy_info_title">Tenancy Information</string>
+    <string name="joined_date_label">Joined Date</string>
+    <string name="identity_document_title">Identity Document (Aadhaar / ID)</string>
+    <string name="view_document_full">View Full Document</string>
+    <string name="close_document">Close</string>
+    <string name="recent_activity_title">Recent Activity (Last 10 Records)</string>
+    <string name="no_ledger_records">No recent billing or payment transactions recorded.</string>
+    <string name="download_share_invoice">Download / Share PDF Invoice</string>
+    <string name="generating_statement">Generating Statement…</string>
+    <string name="ledger_type_payment">Payment Received</string>
+    <string name="ledger_type_bill">Bill Generated</string>
+    <string name="ledger_type_adjustment">Adjustment</string>
+    <string name="running_balance_prefix">Balance: ₹%1$s</string>
+
+    <!-- Photo and Document Uploads -->
+    <string name="tenant_photo_label">Tenant Photo</string>
+    <string name="adhaar_card_label">Aadhaar / ID Card</string>
+    <string name="pick_photo_action">Attach Photo</string>
+    <string name="pick_adhaar_action">Attach Aadhaar / ID</string>
+    <string name="uploading_media">Uploading…</string>
+    <string name="remove_attachment">Remove</string>
 </resources>
