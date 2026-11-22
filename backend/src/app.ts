@@ -15,6 +15,7 @@ import { paymentsRouter } from './modules/payments/payments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 import { exportRouter } from './modules/export/export.routes';
 import { uploadRouter } from './modules/upload/upload.routes';
+import { billingRouter } from './modules/billing/billing.routes';
 
 export const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/payments', paymentsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/billing', billingRouter);
 
 
 

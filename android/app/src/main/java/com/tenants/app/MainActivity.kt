@@ -38,6 +38,8 @@ sealed class Screen(val route: String, val titleRes: Int, val icon: androidx.com
     data object Tenants : Screen("tenants", R.string.nav_tenants, Icons.Default.People)
     data object Payments : Screen("payments", R.string.nav_payments, Icons.Default.Payment)
     data object Transactions : Screen("transactions", R.string.all_transactions_title, Icons.Default.Payment)
+    data object AddTenant : Screen("add_tenant", R.string.add_tenant_title, Icons.Default.People)
+    data object MeterBilling : Screen("meter_billing", R.string.meter_readings_title, Icons.Default.MeetingRoom)
     data object TenantDetails : Screen("tenant_details/{tenantId}", R.string.nav_tenants, Icons.Default.People) {
         fun createRoute(tenantId: String) = "tenant_details/$tenantId"
     }
@@ -64,7 +66,12 @@ class MainActivity : ComponentActivity() {
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val showBottomBar = authState.isLoggedIn && currentRoute != Screen.Login.route && currentRoute?.startsWith("tenant_details") != true && currentRoute != Screen.Transactions.route
+                val showBottomBar = authState.isLoggedIn &&
+                    currentRoute != Screen.Login.route &&
+                    currentRoute != Screen.AddTenant.route &&
+                    currentRoute != Screen.MeterBilling.route &&
+                    currentRoute != Screen.Transactions.route &&
+                    currentRoute?.startsWith("tenant_details") != true && currentRoute != Screen.Transactions.route
 
                 // Listen for Forced Logout event (e.g. 7-day token expired)
                 val context = androidx.compose.ui.platform.LocalContext.current
@@ -129,6 +136,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToTransactions = {
                                     navController.navigate(Screen.Transactions.route)
+                                },
+                                onNavigateToMeterBilling = {
+                                    navController.navigate(Screen.MeterBilling.route)
                                 }
                             )
                         }
@@ -137,7 +147,20 @@ class MainActivity : ComponentActivity() {
                             TenantsScreen(
                                 onTenantClick = { tenantId ->
                                     navController.navigate(Screen.TenantDetails.createRoute(tenantId))
+                                },
+                                onNavigateToAddTenant = {
+                                    navController.navigate(Screen.AddTenant.route)
                                 }
+                            )
+                        }
+                        composable(Screen.AddTenant.route) {
+                            com.tenants.app.presentation.tenants.AddTenantScreen(
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.MeterBilling.route) {
+                            com.tenants.app.presentation.billing.MeterBillingScreen(
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.Payments.route) { PaymentScreen() }

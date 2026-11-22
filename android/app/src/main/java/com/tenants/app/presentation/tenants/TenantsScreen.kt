@@ -45,13 +45,15 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun TenantsScreen(
     viewModel: TenantsViewModel = koinViewModel(),
-    onTenantClick: (String) -> Unit = {}
+    onTenantClick: (String) -> Unit = {},
+    onNavigateToAddTenant: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     TenantsContent(
         state = state,
         onEvent = viewModel::onEvent,
         onTenantClick = onTenantClick,
+        onNavigateToAddTenant = onNavigateToAddTenant,
         onUploadImage = { bytes, mime, name -> viewModel.uploadImageFile(bytes, mime, name) }
     )
 }
@@ -65,6 +67,7 @@ fun TenantsContent(
     state: TenantsUiState,
     onEvent: (TenantsEvent) -> Unit,
     onTenantClick: (String) -> Unit = {},
+    onNavigateToAddTenant: () -> Unit = {},
     onUploadImage: (suspend (ByteArray, String, String) -> String?)? = null
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -117,7 +120,7 @@ fun TenantsContent(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onEvent(TenantsEvent.ShowAddDialog) },
+                onClick = onNavigateToAddTenant,
                 containerColor = SecondaryContainer,
                 contentColor = Primary,
                 shape = RoundedCornerShape(20.dp)

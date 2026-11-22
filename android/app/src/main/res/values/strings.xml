@@ -127,4 +127,21 @@
     <string name="pick_adhaar_action">Attach Aadhaar / ID</string>
     <string name="uploading_media">Uploading…</string>
     <string name="remove_attachment">Remove</string>
+    <string name="add_tenant_title">Add New Tenant</string>
+    <string name="meter_readings_title">Electricity &amp; Rent Billing</string>
+    <string name="generate_rent_roll_action">Generate Monthly Rent Bill</string>
+    <string name="generating_rent_roll">Charging Rent…</string>
+    <string name="rent_roll_generated_msg">Monthly rent generated: %1$d charged, %2$d skipped</string>
+    <string name="update_readings_action">Save All Readings</string>
+    <string name="export_bills_csv">Export CSV Rent Roll</string>
+    <string name="exporting_csv">Exporting CSV…</string>
+    <string name="csv_download_success">Rent bill CSV downloaded to Downloads folder</string>
+    <string name="units_consumed_label">Units: %1$s</string>
+    <string name="electricity_amount_label">Power: ₹%1$s</string>
+    <string name="rate_per_unit_short">₹/Unit</string>
+    <string name="total_bill_preview">Total Month Bill: ₹%1$s</string>
+    <string name="realtime_due_label">Net Due: ₹%1$s</string>
+    <string name="realtime_advance_label">Net Advance: ₹%1$s</string>
+    <string name="paying_amount_label">Paying Amount</string>
+    <string name="expected_payable_label">Total Payable Due</string>
 </resources>

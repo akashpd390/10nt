@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
@@ -51,14 +52,16 @@ import org.koin.androidx.compose.koinViewModel
 fun DashboardScreen(
     viewModel: DashboardViewModel = koinViewModel(),
     onLogoutClick: () -> Unit = {},
-    onNavigateToTransactions: () -> Unit = {}
+    onNavigateToTransactions: () -> Unit = {},
+    onNavigateToMeterBilling: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DashboardContent(
         state = state,
         onEvent = viewModel::onEvent,
         onLogoutClick = onLogoutClick,
-        onNavigateToTransactions = onNavigateToTransactions
+        onNavigateToTransactions = onNavigateToTransactions,
+        onNavigateToMeterBilling = onNavigateToMeterBilling
     )
 }
 
@@ -71,7 +74,8 @@ fun DashboardContent(
     state: DashboardUiState,
     onEvent: (DashboardEvent) -> Unit,
     onLogoutClick: () -> Unit = {},
-    onNavigateToTransactions: () -> Unit = {}
+    onNavigateToTransactions: () -> Unit = {},
+    onNavigateToMeterBilling: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val refreshRotation = remember { Animatable(0f) }
@@ -262,12 +266,26 @@ fun DashboardContent(
                                 colors = CardDefaults.cardColors(containerColor = SurfaceContainer)
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = "Finances Overview",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Primary,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Finances Overview",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = Primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        TextButton(
+                                            onClick = onNavigateToMeterBilling,
+                                            colors = ButtonDefaults.textButtonColors(contentColor = Primary)
+                                        ) {
+                                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Meter & Bills", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),

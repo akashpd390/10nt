@@ -79,11 +79,14 @@ class PaymentViewModel(
                 }
             }
             is PaymentEvent.TenantSelected -> {
+                val tenant = event.tenant
+                val bal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
+                val defaultAmount = if (bal < 0) kotlin.math.abs(bal).toString() else tenant.allottedPrice
                 _uiState.update {
                     it.copy(
-                        selectedTenant = event.tenant,
-                        amountPaid = event.tenant.allottedPrice, // Default suggestion to monthly rent
-                        currentElectricityReading = event.tenant.lastMeterReading
+                        selectedTenant = tenant,
+                        amountPaid = defaultAmount,
+                        currentElectricityReading = tenant.lastMeterReading
                     )
                 }
             }

@@ -200,33 +200,86 @@ fun PaymentContent(
                 }
             }
 
-            // Selected Tenant Quick Stats
+            // Selected Tenant Quick Stats & Real-time Live Calculations
             state.selectedTenant?.let { tenant ->
+                val prevBal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
+                val prevReading = tenant.lastMeterReading.toDoubleOrNull() ?: 0.0
+                val currReading = state.currentElectricityReading.toDoubleOrNull() ?: prevReading
+                val elecRate = tenant.electricityRatePerUnit.toDoubleOrNull() ?: 8.0
+                val unitsDiff = if (currReading > prevReading) currReading - prevReading else 0.0
+                val elecCharge = unitsDiff * elecRate
+                val amountPaidNum = state.amountPaid.toDoubleOrNull() ?: 0.0
+
+                // Net balance preview: starting balance - new electricity charge + amount paid
+                val previewBalance = prevBal - elecCharge + amountPaidNum
+                val totalDueBeforePayment = prevBal - elecCharge
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(stringResource(R.string.current_balance_label), style = MaterialTheme.typography.labelSmall, color = Outline)
-                            val bal = tenant.currentBalance.toDoubleOrNull() ?: 0.0
-                            Text(
-                                text = if (bal < 0) "Due: ₹${"%.2f".format(kotlin.math.abs(bal))}"
-                                else if (bal > 0) "Advance: ₹${"%.2f".format(bal)}"
-                                else "Settled (₹0.00)",
-                                color = if (bal < 0) Error else Primary,
-                                fontWeight = FontWeight.Bold
-                            )
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(stringResource(R.string.current_balance_label), style = MaterialTheme.typography.labelSmall, color = Outline)
+                                Text(
+                                    text = if (prevBal < 0) "Due: ₹${"%.2f".format(kotlin.math.abs(prevBal))}"
+                                    else if (prevBal > 0) "Advance: ₹${"%.2f".format(prevBal)}"
+                                    else "Settled (₹0.00)",
+                                    color = if (prevBal < 0) Error else Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(stringResource(R.string.last_meter_reading_label), style = MaterialTheme.typography.labelSmall, color = Outline)
+                                Text("${prevReading.toInt()} units", fontWeight = FontWeight.Bold, color = OnSurface)
+                            }
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(stringResource(R.string.last_meter_reading_label), style = MaterialTheme.typography.labelSmall, color = Outline)
-                            Text("${tenant.lastMeterReading} units", fontWeight = FontWeight.Bold, color = OnSurface)
+
+                        if (unitsDiff > 0) {
+                            HorizontalDivider(color = OutlineVariant.copy(alpha = 0.5f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("New Power: ${"%.1f".format(unitsDiff)} units (@ ₹$elecRate)", style = MaterialTheme.typography.bodySmall, color = Primary)
+                                Text("+ ₹${"%.2f".format(elecCharge)}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Error)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Total Payable Due:", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = OnSurface)
+                                Text(
+                                    "₹${"%.2f".format(kotlin.math.abs(totalDueBeforePayment))}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Error
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = OutlineVariant.copy(alpha = 0.5f))
+
+                        // Real-time Balance After Payment Preview
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Balance After Payment:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Outline)
+                            Text(
+                                text = if (previewBalance < 0) "Due ₹${"%.2f".format(kotlin.math.abs(previewBalance))}"
+                                else if (previewBalance > 0) "Advance ₹${"%.2f".format(previewBalance)}"
+                                else "All Cleared (₹0.00)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (previewBalance < 0) Error else Primary
+                            )
                         }
                     }
                 }

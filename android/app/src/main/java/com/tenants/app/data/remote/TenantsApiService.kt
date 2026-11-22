@@ -56,4 +56,17 @@ interface TenantsApiService {
     @Streaming
     @GET("api/export/tenants/{id}/pdf")
     suspend fun downloadTenantPdf(@Path("id") id: String): Response<ResponseBody>
+
+    @POST("api/billing/generate-rent-roll")
+    suspend fun generateRentRoll(@Body request: GenerateRentRollRequest): Response<GenerateRentRollResponse>
+
+    @GET("api/billing/summary")
+    suspend fun getMonthlyBillingSummary(@Query("month") month: String? = null): Response<MonthlyBillingSummaryResponse>
+
+    @POST("api/billing/update-readings")
+    suspend fun updateMeterReadings(@Body request: BatchMeterUpdateRequest): Response<ResponseBody>
+
+    @Streaming
+    @GET("api/export/bills/csv")
+    suspend fun downloadMonthlyBillsCsv(@Query("month") month: String? = null): Response<ResponseBody>
 }

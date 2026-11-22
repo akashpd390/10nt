@@ -6,15 +6,17 @@
 
 import { Request, Response } from 'express';
 import { db } from '../../db';
-import { tenants, rooms, ledgerEntries } from '../../db/schema';
+import { tenants, rooms, ledgerEntries, bills } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { generateCsvContent, generateInvoicePdfBuffer } from './export.util';
 
 /**
  * Exports current rent-roll / tenant balances as CSV.
  */
-export async function exportTenantsCsvHandler(_req: Request, res: Response): Promise<void> {
+export async function exportTenantsCsvHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
   const allTenants = await db.query.tenants.findMany({
+    where: landlordId ? eq(tenants.landlordId, landlordId) : undefined,
     with: {
       room: true,
     },
@@ -37,6 +39,67 @@ export async function exportTenantsCsvHandler(_req: Request, res: Response): Pro
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="tenants-report.csv"');
+  res.status(200).send(csvContent);
+}
+
+/**
+ * Exports comprehensive monthly rent & electricity bill per tenant in clean tabular format.
+ * Suitable for printing and tear-off tenant dispatch.
+ */
+export async function exportMonthlyRentBillCsvHandler(req: Request, res: Response): Promise<void> {
+  const landlordId = (req as any).user?.userId;
+  const now = new Date();
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const targetMonth = (req.query.month as string) || defaultMonth;
+
+  const allTenants = await db.query.tenants.findMany({
+    where: landlordId ? eq(tenants.landlordId, landlordId) : undefined,
+    with: {
+      room: true,
+      bills: {
+        orderBy: [desc(bills.createdAt)],
+      },
+    },
+    orderBy: [desc(tenants.createdAt)],
+  });
+
+  const records = allTenants.map((t) => {
+    // Find bill matching month, or latest bill
+    const bill = t.bills.find((b) => b.billingMonth === targetMonth) || t.bills[0];
+    const prevReading = bill ? Number(bill.prevMeterReading) : Number(t.lastMeterReading);
+    const currReading = bill ? Number(bill.currMeterReading) : Number(t.lastMeterReading);
+    const units = bill ? Number(bill.unitsConsumed) : 0;
+    const rate = bill ? Number(bill.electricityRatePerUnit) : Number(t.electricityRatePerUnit);
+    const elecAmount = bill ? Number(bill.electricityAmount) : 0;
+    const rentAmount = bill ? Number(bill.rentAmount) : Number(t.allottedPrice);
+    const totalMonthBill = Number((rentAmount + elecAmount).toFixed(2));
+    const bal = Number(t.currentBalance);
+    const totalPayableDue = bal < 0 ? Math.abs(bal) : 0;
+    const advanceCredit = bal > 0 ? bal : 0;
+
+    return {
+      'Billing Month': targetMonth,
+      'Tenant Name': t.name,
+      'Room No': t.room?.roomNo || 'N/A',
+      'Mobile Number': t.phone,
+      'Base Rent (₹)': rentAmount.toFixed(2),
+      'Prev Meter Reading': prevReading.toFixed(2),
+      'Curr Meter Reading': currReading.toFixed(2),
+      'Units Consumed': units.toFixed(2),
+      'Unit Rate (₹)': rate.toFixed(2),
+      'Electricity Bill (₹)': elecAmount.toFixed(2),
+      'This Month Bill (₹)': totalMonthBill.toFixed(2),
+      'Total Pending Due (₹)': totalPayableDue.toFixed(2),
+      'Advance Credit (₹)': advanceCredit.toFixed(2),
+      'Net Balance Status': bal < 0 ? 'DUE' : bal > 0 ? 'ADVANCE' : 'SETTLED',
+      'Bill Generated Date': bill ? new Date(bill.generatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    };
+  });
+
+  const csvContent = await generateCsvContent(records);
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="rent-bill-${targetMonth}.csv"`);
   res.status(200).send(csvContent);
 }
 

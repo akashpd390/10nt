@@ -72,6 +72,15 @@ class DashboardViewModel(
                 }
             }
             try {
+                // Trigger idempotent monthly rent check on explicit refresh
+                if (!isSilent) {
+                    try {
+                        apiService.generateRentRoll(com.tenants.app.data.remote.model.GenerateRentRollRequest())
+                    } catch (_: Exception) {
+                        // Fail gracefully if offline or rent already current
+                    }
+                }
+
                 val response = apiService.getDashboardOverview()
                 if (response.isSuccessful && response.body() != null) {
                     _uiState.update {

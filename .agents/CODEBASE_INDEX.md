@@ -41,6 +41,9 @@ This file acts as the project index. It documents every file created, its purpos
 - `backend/src/modules/tenants/tenants.routes.ts`: Routes for `/api/tenants`.
 - `backend/src/modules/billing/ledger.util.ts`: Financial ledger calculations for electricity units, total bills, and signed running balances.
 - `backend/src/modules/billing/ledger.test.ts`: TDD test suite validating bill calculations, signed balance mutations, and advance adjustments.
+- `backend/src/modules/billing/billing.routes.ts`: Routes for idempotent rent roll, batch meter updates, and monthly summaries.
+- `backend/src/modules/billing/billing.controller.ts`: Controllers managing idempotent monthly rent charges and meter updates.
+- `backend/src/modules/billing/billing.test.ts`: Unit tests validating billing math and constraints.
 - `backend/src/modules/payments/payments.controller.ts`: Manual payment entry handler with automatic ledger logging and mobile SMS notification template generation.
 - `backend/src/modules/payments/payments.routes.ts`: Routes for `/api/payments`.
 - `backend/src/modules/dashboard/dashboard.controller.ts`: Dashboard aggregation controller (room occupancy, total people count, pending vs advance finances, sorted unpaid tenants list, and last 5 transactions).
@@ -88,6 +91,9 @@ This file acts as the project index. It documents every file created, its purpos
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsViewModel.kt`: Tenant state management with typed requests, error/success feedback, room allocation, and multipart photo & Aadhaar upload support.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantsScreen.kt`: Tenant listing with avatar thumbnails, Emerald & Parchment Add/Edit dialogs with modern Photo & Aadhaar attachment pickers, room selector, and `@Preview`.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsViewModel.kt`: Tenant profile details, `getTenantById` integration with recent 10 ledger entries, reactive DataSyncBus sync, pull-to-refresh, and PDF download state management.
+- `android/app/src/main/java/com/tenants/app/presentation/tenants/AddTenantScreen.kt`: Dedicated full-screen route for registering new tenants with Aadhaar & photo picker.
+- `android/app/src/main/java/com/tenants/app/presentation/billing/MeterBillingScreen.kt`: Screen for batch room meter updates and monthly rent roll charging.
+- `android/app/src/main/java/com/tenants/app/presentation/billing/MeterBillingViewModel.kt`: ViewModel managing batch electricity updates, rent roll generation, and CSV download.
 - `android/app/src/main/java/com/tenants/app/presentation/tenants/TenantDetailsScreen.kt`: Jetpack Compose UI for tenant details, profile avatar with Coil, clickable Aadhaar/ID document preview dialog, recent ledger breakdown list (charges, payments, adjustments), and 1-tap "Download / Share PDF Invoice" button with `@Preview`.
 - `android/app/src/main/java/com/tenants/app/utils/PdfDownloadHelper.kt`: FileProvider caching and Android share/view intent launcher for PDF invoice statements.
 - `android/app/src/main/res/xml/file_paths.xml`: FileProvider cache path mapping for invoice sharing.

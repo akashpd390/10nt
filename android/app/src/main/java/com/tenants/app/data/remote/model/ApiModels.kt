@@ -216,3 +216,48 @@ data class PaymentRecordDto(
 data class PaymentsListResponse(
     @SerializedName("payments") val payments: List<PaymentRecordDto>
 )
+
+// Billing DTOs
+data class TenantBillingSummaryDto(
+    @SerializedName("tenantId") val tenantId: String,
+    @SerializedName("tenantName") val tenantName: String,
+    @SerializedName("phone") val phone: String,
+    @SerializedName("roomNo") val roomNo: String,
+    @SerializedName("roomId") val roomId: String?,
+    @SerializedName("allottedRent") val allottedRent: Double,
+    @SerializedName("electricityRatePerUnit") val electricityRatePerUnit: Double,
+    @SerializedName("lastMeterReading") val lastMeterReading: Double,
+    @SerializedName("currentMeterReading") val currentMeterReading: Double,
+    @SerializedName("unitsConsumed") val unitsConsumed: Double,
+    @SerializedName("electricityAmount") val electricityAmount: Double,
+    @SerializedName("totalBillAmount") val totalBillAmount: Double,
+    @SerializedName("currentBalance") val currentBalance: Double,
+    @SerializedName("isBilledForMonth") val isBilledForMonth: Boolean
+)
+
+data class MonthlyBillingSummaryResponse(
+    @SerializedName("billingMonth") val billingMonth: String,
+    @SerializedName("tenants") val tenants: List<TenantBillingSummaryDto>
+)
+
+data class MeterUpdateItem(
+    @SerializedName("tenantId") val tenantId: String,
+    @SerializedName("currentMeterReading") val currentMeterReading: Double,
+    @SerializedName("electricityRatePerUnit") val electricityRatePerUnit: Double? = null
+)
+
+data class BatchMeterUpdateRequest(
+    @SerializedName("billingMonth") val billingMonth: String? = null,
+    @SerializedName("updates") val updates: List<MeterUpdateItem>
+)
+
+data class GenerateRentRollRequest(
+    @SerializedName("billingMonth") val billingMonth: String? = null
+)
+
+data class GenerateRentRollResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("billingMonth") val billingMonth: String,
+    @SerializedName("generatedCount") val generatedCount: Int,
+    @SerializedName("skippedCount") val skippedCount: Int
+)
